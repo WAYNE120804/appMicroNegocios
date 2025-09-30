@@ -3,8 +3,14 @@ plugins {
     alias(libs.plugins.kotlin.android)
     // Añade KSP (puedes mezclar alias y plugin directo)
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
-    id("com.google.devtools.ksp") version "2.0.0-1.0.24"
+    id("com.google.devtools.ksp") version "2.0.21-1.0.25"
+
+
+
 }
+
+
+
 
 android {
     namespace = "com.sebas.tiendaropa"
@@ -58,6 +64,7 @@ dependencies {
     implementation("androidx.compose.ui:ui:1.7.3")
     implementation("androidx.compose.material3:material3:1.3.0")
     implementation("androidx.compose.ui:ui-tooling-preview:1.7.3")
+    implementation(libs.androidx.room.common.jvm)
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
 
     // (Opcional) Navigation Compose, si luego la usamos
@@ -71,6 +78,10 @@ dependencies {
     // 3) Room
     implementation("androidx.room:room-ktx:2.6.1")
     ksp("androidx.room:room-compiler:2.6.1")
+    // Navigation Compose
+    implementation("androidx.navigation:navigation-compose:2.8.3")
+    implementation("androidx.compose.material:material-icons-extended:1.7.3")
+
 
     // Tests
     testImplementation(libs.junit)

@@ -10,6 +10,12 @@
     <string name="action_save">Save</string>
     <string name="action_cancel">Cancel</string>
     <string name="customers_add_symbol">+</string>
+    <string name="search_label">Name / Phone</string>
+    <string name="search_placeholder">Search by name or phone</string>
+    <string name="categories_title">Categories</string>
+    <string name="new_category_title">New category</string>
+
+
 
     <plurals name="customers_count">
         <item quantity="one">%d customer</item>

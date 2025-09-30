@@ -13,6 +13,14 @@
     <string name="edit_customer_title">Editar cliente</string>
     <string name="delete">Eliminar</string>
     <string name="edit">Editar</string>
+    <string name="search_label">Nombre / Número</string>
+    <string name="search_placeholder">Buscar por nombre o celular</string>
+    <string name="categories_title">Categorías</string>
+    <string name="new_category_title">Nueva categoría</string>
+
+
+
+
 
 
     <plurals name="customers_count">

@@ -10,14 +10,33 @@ import com.sebas.tiendaropa.data.repo.CustomersRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 class CustomersViewModel(private val repo: CustomersRepository) : ViewModel() {
 
+    private val _query = kotlinx.coroutines.flow.MutableStateFlow("")
+    val query: kotlinx.coroutines.flow.StateFlow<String> = _query
+    fun setQuery(q: String) { _query.value = q }
+
+
     val customers = repo.customers.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList()
     )
+
+    val visibleCustomers: kotlinx.coroutines.flow.StateFlow<List<com.sebas.tiendaropa.data.entity.CustomerEntity>> =
+        _query
+            .debounce(200)
+            .flatMapLatest { q ->
+                if (q.isBlank()) repo.customers else repo.search(q.trim())
+            }
+            .stateIn(viewModelScope,
+                kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5_000),
+                emptyList()
+            )
+
 
     // Cliente seleccionado para edición (null = modo "nuevo")
     private val _editing = MutableStateFlow<CustomerEntity?>(null)

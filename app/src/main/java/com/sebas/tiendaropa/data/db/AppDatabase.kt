@@ -4,12 +4,19 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import com.sebas.tiendaropa.data.dao.CategoryDao
 import com.sebas.tiendaropa.data.dao.CustomerDao
+import com.sebas.tiendaropa.data.entity.CategoryEntity
 import com.sebas.tiendaropa.data.entity.CustomerEntity
 
-@Database(entities = [CustomerEntity::class], version = 1, exportSchema = true)
+@Database(
+    entities = [CustomerEntity::class, CategoryEntity::class],
+    version = 1,
+    exportSchema = true
+)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun customerDao() : CustomerDao
+    abstract fun categoryDao() : CategoryDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null

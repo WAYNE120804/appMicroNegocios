@@ -14,6 +14,15 @@ interface CustomerDao {
     @Query("SELECT * FROM customers ORDER BY name ASC")
     fun observeAll(): Flow<List<CustomerEntity>>
 
+    @Query("""
+    SELECT * FROM customers
+    WHERE name  LIKE '%' || :q || '%'
+       OR phone LIKE '%' || :q || '%'
+    ORDER BY name ASC
+""")
+    fun search(q: String): kotlinx.coroutines.flow.Flow<List<com.sebas.tiendaropa.data.entity.CustomerEntity>>
+
+
     @Insert
     suspend fun insert(c: CustomerEntity)
 

@@ -6,6 +6,9 @@ import com.sebas.tiendaropa.data.entity.CustomerEntity
 class CustomersRepository(private val dao: CustomerDao) {
     val customers = dao.observeAll()
 
+    fun search(q: String) = dao.search(q)
+
+
     suspend fun add(name: String, address: String?, phone: String?) =
         dao.insert(
             CustomerEntity(

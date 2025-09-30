@@ -1,4 +1,4 @@
-package com.sebas.tiendaropa.ui.customers
+package com.sebas.tiendaropa.ui.categories
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -28,25 +27,25 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.sebas.tiendaropa.R
-import com.sebas.tiendaropa.data.entity.CustomerEntity
-
+import com.sebas.tiendaropa.data.entity.CategoryEntity
+import androidx.compose.foundation.lazy.items
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomersScreen(vm: CustomersViewModel) {
-    val customers by vm.visibleCustomers.collectAsState()
+fun CategoriesScreen(vm: CategoriesViewModel) {
+    val categories by vm.visibleCategories.collectAsState()
     val query by vm.query.collectAsState()
     val editing by vm.editing.collectAsState()
     val showDialog = remember { mutableStateOf(false) }
 
     fun openNew() { vm.clearEdit(); showDialog.value = true }
-    fun openEdit(c: CustomerEntity) { vm.startEdit(c); showDialog.value = true }
+    fun openEdit(c: CategoryEntity) { vm.startEdit(c); showDialog.value = true }
 
     Scaffold(
         topBar = {
             Column {
-                TopAppBar(title = { Text(stringResource(R.string.customers_title)) })
+                TopAppBar(title = { Text(stringResource(R.string.categories_title)) })
                 OutlinedTextField(
                     value = query,
                     onValueChange = vm::setQuery,
@@ -54,8 +53,8 @@ fun CustomersScreen(vm: CustomersViewModel) {
                         .fillMaxWidth()
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     singleLine = true,
-                    label = { Text("Nombre / Número") }, // o stringResource(...)
-                    placeholder = { Text("Buscar por nombre o celular") } // o stringResource(...)
+                    label = { Text("Categoría") },
+                    placeholder = { Text("Buscar categoría...") }
                 )
             }
         },
@@ -64,12 +63,9 @@ fun CustomersScreen(vm: CustomersViewModel) {
         }
     ) { innerPadding ->
         LazyColumn(Modifier.padding(innerPadding)) {
-            items(customers) { c ->
+            items(categories) { c ->
                 ListItem(
                     headlineContent = { Text(c.name) },
-                    supportingContent = {
-                        Text(listOfNotNull(c.phone, c.address).joinToString(" • "))
-                    },
                     trailingContent = {
                         Row {
                             TextButton(onClick = { openEdit(c) }) { Text("Editar") }
@@ -77,7 +73,7 @@ fun CustomersScreen(vm: CustomersViewModel) {
                         }
                     },
                     modifier = Modifier
-                        .clickable { openEdit(c) } // tocar el item también edita
+                        .clickable { openEdit(c) }
                         .padding(horizontal = 8.dp)
                 )
                 Divider()
@@ -87,12 +83,12 @@ fun CustomersScreen(vm: CustomersViewModel) {
 
     if (showDialog.value) {
         val initial = editing
-        CustomerDialog(
+        CategoryDialog(
             initial = initial,
             onDismiss = { showDialog.value = false },
-            onSave = { name, addr, phone ->
-                if (initial == null) vm.saveNew(name, addr, phone)
-                else vm.saveEdit(initial.id, name, addr, phone)
+            onSave = { name ->
+                if (initial == null) vm.saveNew(name)
+                else vm.saveEdit(initial.id, name)
                 showDialog.value = false
             }
         )
@@ -100,23 +96,21 @@ fun CustomersScreen(vm: CustomersViewModel) {
 }
 
 @Composable
-private fun CustomerDialog(
-    initial: CustomerEntity?,
+private fun CategoryDialog(
+    initial: CategoryEntity?,
     onDismiss: () -> Unit,
-    onSave: (String, String?, String?) -> Unit
+    onSave: (String) -> Unit
 ) {
     val name = remember { mutableStateOf(initial?.name ?: "") }
-    val address = remember { mutableStateOf(initial?.address ?: "") }
-    val phone = remember { mutableStateOf(initial?.phone ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
                 if (initial == null)
-                    stringResource(R.string.new_customer_title)
+                    stringResource(R.string.new_category_title)
                 else
-                    "Editar cliente"
+                    "Editar categoría"
             )
         },
         text = {
@@ -127,26 +121,11 @@ private fun CustomerDialog(
                     label = { Text(stringResource(R.string.field_name)) }
                 )
                 Spacer(Modifier.padding(top = 8.dp))
-                OutlinedTextField(
-                    value = address.value,
-                    onValueChange = { address.value = it },
-                    label = { Text(stringResource(R.string.field_address)) }
-                )
-                Spacer(Modifier.padding(top = 8.dp))
-                OutlinedTextField(
-                    value = phone.value,
-                    onValueChange = { phone.value = it },
-                    label = { Text(stringResource(R.string.field_phone)) }
-                )
             }
         },
         confirmButton = {
             FilledTonalButton(onClick = {
-                onSave(
-                    name.value,
-                    address.value.ifBlank { null },
-                    phone.value.ifBlank { null }
-                )
+                if (name.value.isNotBlank()) onSave(name.value)
             }) { Text(stringResource(R.string.action_save)) }
         },
         dismissButton = {
