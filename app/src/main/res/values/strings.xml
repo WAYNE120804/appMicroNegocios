@@ -1,0 +1,18 @@
+<resources>
+    <string name="app_name">tiendaRopa</string>
+
+    <!-- Customers -->
+    <string name="customers_title">Customers</string>
+    <string name="new_customer_title">New customer</string>
+    <string name="field_name">Name</string>
+    <string name="field_address">Address</string>
+    <string name="field_phone">Phone</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="customers_add_symbol">+</string>
+
+    <plurals name="customers_count">
+        <item quantity="one">%d customer</item>
+        <item quantity="other">%d customers</item>
+    </plurals>
+</resources>

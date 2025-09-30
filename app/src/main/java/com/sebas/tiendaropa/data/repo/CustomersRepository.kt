@@ -1,0 +1,31 @@
+package com.sebas.tiendaropa.data.repo
+
+import com.sebas.tiendaropa.data.dao.CustomerDao
+import com.sebas.tiendaropa.data.entity.CustomerEntity
+
+class CustomersRepository(private val dao: CustomerDao) {
+    val customers = dao.observeAll()
+
+    suspend fun add(name: String, address: String?, phone: String?) =
+        dao.insert(
+            CustomerEntity(
+                name = name.trim(),
+                address = address?.ifBlank { null },
+                phone = phone?.ifBlank { null }
+            )
+        )
+
+    suspend fun update(id: Long, name: String, address: String?, phone: String?) =
+        dao.update(
+            CustomerEntity(
+                id = id,
+                name = name.trim(),
+                address = address?.ifBlank { null },
+                phone = phone?.ifBlank { null }
+            )
+        )
+
+    suspend fun remove(c: CustomerEntity) = dao.delete(c)
+
+    suspend fun removeById(id: Long) = dao.deleteById(id)
+}

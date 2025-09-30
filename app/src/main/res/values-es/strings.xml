@@ -1,0 +1,22 @@
+<resources>
+    <string name="app_name">Tienda</string>
+
+    <!-- Clientes -->
+    <string name="customers_title">Clientes</string>
+    <string name="new_customer_title">Nuevo cliente</string>
+    <string name="field_name">Nombre</string>
+    <string name="field_address">Dirección</string>
+    <string name="field_phone">Celular</string>
+    <string name="action_save">Guardar</string>
+    <string name="action_cancel">Cancelar</string>
+    <string name="customers_add_symbol">+</string>
+    <string name="edit_customer_title">Editar cliente</string>
+    <string name="delete">Eliminar</string>
+    <string name="edit">Editar</string>
+
+
+    <plurals name="customers_count">
+        <item quantity="one">%d cliente</item>
+        <item quantity="other">%d clientes</item>
+    </plurals>
+</resources>
