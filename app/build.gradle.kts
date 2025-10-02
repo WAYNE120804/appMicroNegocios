@@ -65,6 +65,8 @@ dependencies {
     implementation("androidx.compose.material3:material3:1.3.0")
     implementation("androidx.compose.ui:ui-tooling-preview:1.7.3")
     implementation(libs.androidx.room.common.jvm)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.foundation.layout)
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
 
     // (Opcional) Navigation Compose, si luego la usamos
@@ -80,6 +82,15 @@ dependencies {
     ksp("androidx.room:room-compiler:2.6.1")
     // Navigation Compose
     implementation("androidx.navigation:navigation-compose:2.8.3")
+    implementation("androidx.compose.material:material-icons-extended:1.7.3")
+
+    // DataStore Preferences
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+
+// Cargar imagen del logo (URI) en Compose
+    implementation("io.coil-kt:coil-compose:2.6.0")
+
+// Íconos Material (ya lo venías usando)
     implementation("androidx.compose.material:material-icons-extended:1.7.3")
 
 

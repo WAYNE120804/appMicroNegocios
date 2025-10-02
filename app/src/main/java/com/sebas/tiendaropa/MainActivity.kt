@@ -4,39 +4,56 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import coil.compose.AsyncImage
 import com.sebas.tiendaropa.ui.categories.CategoriesScreen
 import com.sebas.tiendaropa.ui.categories.CategoriesViewModel
 import com.sebas.tiendaropa.ui.customers.CustomersScreen
 import com.sebas.tiendaropa.ui.customers.CustomersViewModel
+import com.sebas.tiendaropa.ui.home.HomeScreen
+import com.sebas.tiendaropa.ui.products.ProductsViewModel
+import com.sebas.tiendaropa.ui.settings.SettingsScreen
+import com.sebas.tiendaropa.ui.settings.SettingsViewModel
+import kotlinx.coroutines.launch
+
 
 class MainActivity : ComponentActivity() {
 
@@ -46,80 +63,126 @@ class MainActivity : ComponentActivity() {
     private val categoriesVm: CategoriesViewModel by viewModels {
         CategoriesViewModel.factory(applicationContext)
     }
+    private val settingsVm: SettingsViewModel by viewModels {
+        SettingsViewModel.factory(applicationContext)
+    }
 
+    private val productsVm: ProductsViewModel by viewModels {
+        ProductsViewModel.factory(applicationContext)
+    }
+
+
+    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
                 val nav = rememberNavController()
-                val backStackEntry by nav.currentBackStackEntryAsState()
-                val currentRoute = backStackEntry?.destination?.route
+                val currentRoute = nav.currentBackStackEntryAsState().value?.destination?.route
 
-                Scaffold(
-                    bottomBar = {
-                        NavigationBar {
-                            NavigationBarItem(
-                                selected = currentRoute == Routes.Home,
-                                onClick = {
-                                    nav.navigate(Routes.Home) {
-                                        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(Icons.Default.Home, "Inicio") },
-                                label = { Text("Inicio") }
+                // Drawer state
+                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                val scope = rememberCoroutineScope()
+
+                // 👇 Ítems del menú (agrega los que quieras después)
+                data class DrawerItem(val route: String, val label: String, val icon: ImageVector)
+                val items = listOf(
+                    DrawerItem(Routes.Home,       "Inicio",        Icons.Default.Home),
+                    DrawerItem(Routes.Customers,  "Clientes",      Icons.Default.People),
+                    DrawerItem(Routes.Categories, "Categorías",    Icons.Default.Category),
+                    //DrawerItem(Routes.Products,   "Productos",     Icons.Default.ShoppingCart),
+                    DrawerItem(Routes.Settings,   "Configuración", Icons.Default.Settings),
+                )
+
+                val settingsState = settingsVm.state.collectAsState().value
+
+                ModalNavigationDrawer(
+                    drawerState = drawerState,
+                    drawerContent = {
+                        ModalDrawerSheet {
+                            Text(
+                                text = settingsState.storeName,
+                                style = MaterialTheme.typography.titleLarge,
+                                modifier = Modifier.padding(16.dp)
                             )
-                            NavigationBarItem(
-                                selected = currentRoute == Routes.Customers,
-                                onClick = {
-                                    nav.navigate(Routes.Customers) {
-                                        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(Icons.Default.People, "Clientes") },
-                                label = { Text("Clientes") }
-                            )
-                            NavigationBarItem(
-                                selected = currentRoute == Routes.Categories,
-                                onClick = {
-                                    nav.navigate(Routes.Categories) {
-                                        popUpTo(nav.graph.findStartDestination().id) { saveState = true }
-                                        launchSingleTop = true
-                                        restoreState = true
-                                    }
-                                },
-                                icon = { Icon(Icons.Default.Category, "Categorías") },
-                                label = { Text("Categorías") }
-                            )
+                            items.forEach { item ->
+                                NavigationDrawerItem(
+                                    label = { Text(item.label) },
+                                    selected = currentRoute == item.route,
+                                    onClick = {
+                                        nav.navigate(item.route) {
+                                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                        scope.launch { drawerState.close() }
+                                    },
+                                    icon = { Icon(item.icon, contentDescription = item.label) },
+                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                )
+                            }
                         }
                     }
-                ) { inner ->
-                    NavHost(
-                        navController = nav,
-                        startDestination = Routes.Home,
-                        modifier = Modifier.padding(inner)
-                    ) {
-                        composable(Routes.Home) {
-                            HomeScreen(
-                                totalExpenses = 0.0,     // TODO: enlazar a Room cuando tengas gastos
-                                totalPurchases = 0.0,    // TODO: suma precioCompra de productos comprados
-                                totalProfit = 0.0,       // TODO: ventas - compras
-                                onAddSale = { nav.navigate(Routes.AddSale) },
-                                onAddPayment = { nav.navigate(Routes.AddPayment) },
-                                onAddClient = { nav.navigate(Routes.Customers) },
-                                onAddExpense = { nav.navigate(Routes.Expenses) }
+                ) {
+                    Scaffold(
+                        topBar = {
+                            TopAppBar(
+                                title = {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(settingsState.storeName)
+                                        Spacer(Modifier.width(12.dp))
+                                        // Logo (un poco más grande)
+                                        settingsState.logoUri?.let {
+                                            AsyncImage(
+                                                model = it,
+                                                contentDescription = "Logo",
+                                                modifier = Modifier.size(40.dp).clip(CircleShape)
+                                            )
+                                        }
+                                    }
+                                },
+                                navigationIcon = {
+                                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                        Icon(Icons.Default.Menu, contentDescription = "Menú")
+                                    }
+                                }
                             )
                         }
-                        composable(Routes.Customers) { CustomersScreen(customersVm) }
-                        composable(Routes.Categories) { CategoriesScreen(categoriesVm) }
+                    ) { inner ->
+                        NavHost(
+                            navController = nav,
+                            startDestination = Routes.Home,
+                            modifier = Modifier.padding(inner)
+                        ) {
+                            composable(Routes.Home) {
+                                HomeScreen(
+                                    settings = settingsState,
+                                    totalExpenses = 0.0,
+                                    totalPurchases = 0.0,
+                                    totalProfit = 0.0,
+                                    onAddSale = { nav.navigate(Routes.AddSale) },
+                                    onAddPayment = { nav.navigate(Routes.AddPayment) },
+                                    onAddClient = { nav.navigate(Routes.Customers) },
+                                    onAddExpense = { nav.navigate(Routes.Expenses) }
+                                )
+                            }
+                            composable(Routes.Customers) { CustomersScreen(customersVm) }
+                            composable(Routes.Categories) { CategoriesScreen(categoriesVm) }
 
-                        // ===== Stubs (pantallas provisionales) =====
-                        composable(Routes.AddSale) { ComingSoonScreen("Agregar venta") }
-                        composable(Routes.AddPayment) { ComingSoonScreen("Agregar abono") }
-                        composable(Routes.Expenses) { ComingSoonScreen("Gastos") }
+                            composable(Routes.Settings) {
+                                SettingsScreen(
+                                    state = settingsState,
+                                    onSetStoreName = settingsVm::setStoreName,
+                                    onSetOwnerName = settingsVm::setOwnerName,
+                                    onSetLogoUri = settingsVm::setLogoUri,
+                                    onSetPinEnabled = settingsVm::setPinEnabled,
+                                    onSetBiometricEnabled = settingsVm::setBiometricEnabled
+                                )
+                            }
+                            composable(Routes.AddSale)    { CenterText("Agregar venta — En construcción") }
+                            composable(Routes.AddPayment) { CenterText("Agregar abono — En construcción") }
+                            composable(Routes.Expenses)   { CenterText("Gastos — En construcción") }
+                        }
                     }
                 }
             }
@@ -131,63 +194,26 @@ private object Routes {
     const val Home = "home"
     const val Customers = "customers"
     const val Categories = "categories"
+    const val Settings = "settings"
     const val AddSale = "addSale"
     const val AddPayment = "addPayment"
     const val Expenses = "expenses"
+    //const val Products = "products"
 }
 
 @Composable
-private fun HomeScreen(
-    totalExpenses: Double,
-    totalPurchases: Double,
-    totalProfit: Double,
-    onAddSale: () -> Unit,
-    onAddPayment: () -> Unit,
-    onAddClient: () -> Unit,
-    onAddExpense: () -> Unit,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(16.dp)
-    ) {
-        Text("CloudStore", style = MaterialTheme.typography.headlineMedium)
-        Text("Hola Alisson, ¿qué quieres hacer hoy?")
-
-        // Acciones rápidas
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            Button(onClick = onAddSale, modifier = Modifier.weight(1f)) { Text("Agregar venta") }
-            Button(onClick = onAddPayment, modifier = Modifier.weight(1f)) { Text("Agregar abono") }
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            Button(onClick = onAddClient, modifier = Modifier.weight(1f)) { Text("Agregar cliente") }
-            Button(onClick = onAddExpense, modifier = Modifier.weight(1f)) { Text("Agregar gasto") }
-        }
-
-        // Tarjetas con totales
-        SummaryCard(title = "Gastos", value = totalExpenses)
-        SummaryCard(title = "Compra productos", value = totalPurchases)
-        SummaryCard(title = "Ganancias", value = totalProfit)
-    }
+private fun CenterText(txt: String) {
+    androidx.compose.foundation.layout.Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = androidx.compose.ui.Alignment.Center
+    ) { Text(txt) }
 }
 
-@Composable
-private fun SummaryCard(title: String, value: Double) {
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(16.dp)) {
-            Text(title, style = MaterialTheme.typography.titleMedium)
-            Text(
-                text = "$${"%,.2f".format(value)}",
-                style = MaterialTheme.typography.headlineSmall
-            )
-        }
-    }
-}
-
-@Composable
-private fun ComingSoonScreen(nombre: String) {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Text("$nombre — En construcción")
+// Helper para navegación sin duplicar destinos
+private fun androidx.navigation.NavHostController.safeNavigate(route: String) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }
