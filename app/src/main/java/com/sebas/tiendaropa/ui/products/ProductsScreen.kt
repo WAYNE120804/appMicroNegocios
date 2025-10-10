@@ -38,8 +38,11 @@ import androidx.compose.ui.unit.dp
 import com.sebas.tiendaropa.R
 import com.sebas.tiendaropa.data.entity.CategoryEntity
 import com.sebas.tiendaropa.data.entity.ProductEntity
-import java.text.NumberFormat
-import java.util.Locale
+import com.sebas.tiendaropa.ui.common.currencyFormatter
+import com.sebas.tiendaropa.ui.common.formatPesosFromCents
+import com.sebas.tiendaropa.ui.common.formatPesosInput
+import com.sebas.tiendaropa.ui.common.integerFormatter
+import com.sebas.tiendaropa.ui.common.parsePesosToCents
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -322,30 +325,4 @@ private fun ProductDialog(
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
-}
-
-private fun currencyFormatter(): NumberFormat =
-    NumberFormat.getCurrencyInstance(Locale("es", "CO"))
-
-private fun integerFormatter(): NumberFormat =
-    NumberFormat.getIntegerInstance(Locale("es", "CO")).apply {
-        isGroupingUsed = true
-        maximumFractionDigits = 0
-        minimumFractionDigits = 0
-    }
-
-private fun formatPesosInput(raw: String, formatter: NumberFormat): String {
-    val digitsOnly = raw.filter(Char::isDigit)
-    if (digitsOnly.isEmpty()) return ""
-    val value = digitsOnly.toLongOrNull() ?: return ""
-    return formatter.format(value)
-}
-
-private fun formatPesosFromCents(amountCents: Long, formatter: NumberFormat): String =
-    formatPesosInput((amountCents / 100L).toString(), formatter)
-
-private fun parsePesosToCents(text: String): Long? {
-    val digits = text.filter { it.isDigit() }
-    if (digits.isBlank()) return null
-    return runCatching { digits.toLong() * 100L }.getOrNull()
 }

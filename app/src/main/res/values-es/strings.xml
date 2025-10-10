@@ -34,6 +34,57 @@
     <string name="products_empty_categories">Agrega una categoría primero</string>
     <string name="products_need_category_hint">Necesitas al menos una categoría para crear productos.</string>
 
+    <!-- Ventas -->
+    <string name="sales_title">Ventas</string>
+    <string name="action_add_sale">Agregar venta</string>
+    <string name="sales_empty">Todavía no hay ventas registradas.</string>
+    <string name="sales_products_label">Productos</string>
+    <string name="sales_customer_label">Cliente</string>
+    <string name="sales_total_label">Valor de venta</string>
+    <string name="sales_paid_label">Abonos</string>
+    <string name="sales_due_label">Saldo pendiente</string>
+    <string name="sales_add_payment">Registrar abono</string>
+    <string name="sales_payments_header">Historial de abonos</string>
+    <string name="sales_paid_in_full">Venta pagada completamente</string>
+    <string name="field_quantity">Cantidad</string>
+
+    <string name="add_sale_title">Nueva venta</string>
+    <string name="add_sale_step_products">Escoge los productos</string>
+    <string name="add_sale_step_customer">Escoge el cliente</string>
+    <string name="add_sale_step_review">Revisa y confirma</string>
+    <string name="add_sale_selected_products">Productos de esta venta</string>
+    <string name="add_sale_selected_customer">Cliente seleccionado</string>
+    <string name="add_sale_create_product">Crear producto</string>
+    <string name="add_sale_create_customer">Crear cliente</string>
+    <string name="add_sale_product_search_placeholder">Buscar productos</string>
+    <string name="add_sale_customer_search_placeholder">Buscar clientes</string>
+    <string name="add_sale_no_products_hint">Agrega al menos un producto para continuar.</string>
+    <string name="add_sale_no_customers_hint">Selecciona o crea un cliente para continuar.</string>
+    <string name="add_sale_total">Total</string>
+    <string name="add_sale_outstanding">Saldo</string>
+    <string name="add_sale_confirm">Confirmar venta</string>
+    <string name="action_back">Atrás</string>
+    <string name="action_next">Siguiente</string>
+    <string name="action_select">Seleccionar</string>
+    <string name="add_sale_review_hint">Revisa los datos antes de finalizar.</string>
+    <string name="action_add">Agregar</string>
+
+    <!-- Abonos -->
+    <string name="sales_payment_dialog_title">Registrar abono</string>
+    <string name="sales_payment_dialog_outstanding">Saldo pendiente: %1$s</string>
+    <string name="sales_payment_dialog_amount_label">Valor del abono</string>
+    <string name="sales_payment_dialog_hint">Ingresa cuánto pagó el cliente.</string>
+    <string name="sales_payment_dialog_confirm">Guardar abono</string>
+
+    <!-- Inicio -->
+    <string name="home_greeting">Hola %1$s, ¿qué quieres hacer hoy?</string>
+    <string name="home_action_add_payment">Registrar abono</string>
+    <string name="home_action_add_client">Agregar cliente</string>
+    <string name="home_action_add_expense">Registrar gasto</string>
+    <string name="home_summary_expenses">Gastos</string>
+    <string name="home_summary_purchases">Compras de productos</string>
+    <string name="home_summary_profit">Ganancias</string>
+
 
 
 

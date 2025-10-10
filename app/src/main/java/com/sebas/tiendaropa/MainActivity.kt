@@ -1,5 +1,6 @@
 package com.sebas.tiendaropa
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,6 +17,7 @@ import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.DrawerValue
@@ -52,6 +54,9 @@ import com.sebas.tiendaropa.ui.customers.CustomersViewModel
 import com.sebas.tiendaropa.ui.home.HomeScreen
 import com.sebas.tiendaropa.ui.products.ProductsScreen
 import com.sebas.tiendaropa.ui.products.ProductsViewModel
+import com.sebas.tiendaropa.ui.sales.AddSaleScreen
+import com.sebas.tiendaropa.ui.sales.SalesScreen
+import com.sebas.tiendaropa.ui.sales.SalesViewModel
 import com.sebas.tiendaropa.ui.settings.SettingsScreen
 import com.sebas.tiendaropa.ui.settings.SettingsViewModel
 import kotlinx.coroutines.launch
@@ -73,7 +78,12 @@ class MainActivity : ComponentActivity() {
         ProductsViewModel.factory(applicationContext)
     }
 
+    private val salesVm: SalesViewModel by viewModels {
+        SalesViewModel.factory(applicationContext)
+    }
 
+
+    @SuppressLint("ComposableDestinationInComposeScope")
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -86,14 +96,16 @@ class MainActivity : ComponentActivity() {
                 val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
 
-                // 👇 Ítems del menú (agrega los que quieras después)
+                //Ítems del menú
                 data class DrawerItem(val route: String, val label: String, val icon: ImageVector)
+
                 val items = listOf(
-                    DrawerItem(Routes.Home,       "Inicio",        Icons.Default.Home),
-                    DrawerItem(Routes.Customers,  "Clientes",      Icons.Default.People),
-                    DrawerItem(Routes.Categories, "Categorías",    Icons.Default.Category),
-                    DrawerItem(Routes.Products,   "Productos",     Icons.Default.ShoppingCart),
-                    DrawerItem(Routes.Settings,   "Configuración", Icons.Default.Settings),
+                    DrawerItem(Routes.Home, "Inicio", Icons.Default.Home),
+                    DrawerItem(Routes.Customers, "Clientes", Icons.Default.People),
+                    DrawerItem(Routes.Products, "Productos", Icons.Default.ShoppingCart),
+                    DrawerItem(Routes.Sales, "Ventas", Icons.Default.ReceiptLong),
+                    DrawerItem(Routes.Categories, "Categorías", Icons.Default.Category),
+                    DrawerItem(Routes.Settings, "Configuración", Icons.Default.Settings),
                 )
 
                 val settingsState = settingsVm.state.collectAsState().value
@@ -115,7 +127,9 @@ class MainActivity : ComponentActivity() {
                                     selected = currentRoute == item.route,
                                     onClick = {
                                         nav.navigate(item.route) {
-                                            popUpTo(nav.graph.findStartDestination().id) { saveState = true }
+                                            popUpTo(nav.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
                                             launchSingleTop = true
                                             restoreState = true
                                         }
@@ -165,7 +179,7 @@ class MainActivity : ComponentActivity() {
                                     totalPurchases = totalCompras / 100.0,
                                     totalProfit = totalGanancia / 100.0,
                                     onAddSale = { nav.navigate(Routes.AddSale) },
-                                    onAddPayment = { nav.navigate(Routes.AddPayment) },
+                                    onAddPayment = { nav.navigate(Routes.Sales) },
                                     onAddClient = { nav.navigate(Routes.Customers) },
                                     onAddExpense = { nav.navigate(Routes.Expenses) }
                                 )
@@ -173,54 +187,74 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.Customers) { CustomersScreen(customersVm) }
                             composable(Routes.Categories) { CategoriesScreen(categoriesVm) }
                             composable(Routes.Products) { ProductsScreen(productsVm) }
-
-                            composable(Routes.Settings) {
-                                SettingsScreen(
-                                    state = settingsState,
-                                    onSetStoreName = settingsVm::setStoreName,
-                                    onSetOwnerName = settingsVm::setOwnerName,
-                                    onSetLogoUri = settingsVm::setLogoUri,
-                                    onSetPinEnabled = settingsVm::setPinEnabled,
-                                    onSetBiometricEnabled = settingsVm::setBiometricEnabled
+                            composable(Routes.Sales) {
+                                SalesScreen(
+                                    vm = salesVm,
+                                    onAddSale = { nav.navigate(Routes.AddSale) }
                                 )
+
+                                composable(Routes.Settings) {
+                                    SettingsScreen(
+                                        state = settingsState,
+                                        onSetStoreName = settingsVm::setStoreName,
+                                        onSetOwnerName = settingsVm::setOwnerName,
+                                        onSetLogoUri = settingsVm::setLogoUri,
+                                        onSetPinEnabled = settingsVm::setPinEnabled,
+                                        onSetBiometricEnabled = settingsVm::setBiometricEnabled
+                                    )
+                                }
+                                composable(Routes.AddSale) {
+                                    AddSaleScreen(
+                                        vm = salesVm,
+                                        onFinished = {
+                                            nav.navigate(Routes.Sales) {
+                                                popUpTo(nav.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        }
+                                    )
+                                }
+                                composable(Routes.Expenses) { CenterText("Gastos — En construcción") }
                             }
-                            composable(Routes.AddSale)    { CenterText("Agregar venta — En construcción") }
-                            composable(Routes.AddPayment) { CenterText("Agregar abono — En construcción") }
-                            composable(Routes.Expenses)   { CenterText("Gastos — En construcción") }
                         }
                     }
                 }
             }
         }
     }
-}
 
-private object Routes {
-    const val Home = "home"
-    const val Customers = "customers"
-    const val Products = "products"
-    const val Categories = "categories"
-    const val Settings = "settings"
-    const val AddSale = "addSale"
-    const val AddPayment = "addPayment"
-    const val Expenses = "expenses"
+    private object Routes {
+        const val Home = "home"
+        const val Customers = "customers"
+        const val Products = "products"
+        const val Categories = "categories"
+        const val Settings = "settings"
+        const val AddSale = "addSale"
+        const val AddPayment = "addPayment"
+        const val Expenses = "expenses"
+
+        const val Sales = "sales"
 
 
-}
+    }
 
-@Composable
-private fun CenterText(txt: String) {
-    androidx.compose.foundation.layout.Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = androidx.compose.ui.Alignment.Center
-    ) { Text(txt) }
-}
+    @Composable
+    private fun CenterText(txt: String) {
+        androidx.compose.foundation.layout.Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = androidx.compose.ui.Alignment.Center
+        ) { Text(txt) }
+    }
 
-// Helper para navegación sin duplicar destinos
-private fun androidx.navigation.NavHostController.safeNavigate(route: String) {
-    navigate(route) {
-        popUpTo(graph.findStartDestination().id) { saveState = true }
-        launchSingleTop = true
-        restoreState = true
+    // Helper para navegación sin duplicar destinos
+    private fun androidx.navigation.NavHostController.safeNavigate(route: String) {
+        navigate(route) {
+            popUpTo(graph.findStartDestination().id) { saveState = true }
+            launchSingleTop = true
+            restoreState = true
+        }
     }
 }

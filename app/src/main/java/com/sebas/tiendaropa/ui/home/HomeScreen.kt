@@ -12,7 +12,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.sebas.tiendaropa.R
 import com.sebas.tiendaropa.data.prefs.SettingsState
 
 @Composable
@@ -30,21 +32,31 @@ fun HomeScreen(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Text("Hola ${settings.ownerName}, ¿qué quieres hacer hoy?",
-            style = MaterialTheme.typography.titleMedium)
+        Text(
+            stringResource(R.string.home_greeting, settings.ownerName),
+            style = MaterialTheme.typography.titleMedium
+        )
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            Button(onClick = onAddSale, modifier = Modifier.weight(1f)) { Text("Agregar venta") }
-            Button(onClick = onAddPayment, modifier = Modifier.weight(1f)) { Text("Agregar abono") }
+            Button(onClick = onAddSale, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.action_add_sale))
+            }
+            Button(onClick = onAddPayment, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.home_action_add_payment))
+            }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
-            Button(onClick = onAddClient, modifier = Modifier.weight(1f)) { Text("Agregar cliente") }
-            Button(onClick = onAddExpense, modifier = Modifier.weight(1f)) { Text("Agregar gasto") }
+            Button(onClick = onAddClient, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.home_action_add_client))
+            }
+            Button(onClick = onAddExpense, modifier = Modifier.weight(1f)) {
+                Text(stringResource(R.string.home_action_add_expense))
+            }
         }
 
-        SummaryCard("Gastos", totalExpenses)
-        SummaryCard("Compra productos", totalPurchases)
-        SummaryCard("Ganancias", totalProfit)
+        SummaryCard(stringResource(R.string.home_summary_expenses), totalExpenses)
+        SummaryCard(stringResource(R.string.home_summary_purchases), totalPurchases)
+        SummaryCard(stringResource(R.string.home_summary_profit), totalProfit)
     }
 }
 

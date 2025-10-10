@@ -34,6 +34,60 @@
     <string name="products_need_category_hint">You need at least one category to create products.</string>
 
 
+
+
+
+    <!-- Sales -->
+    <string name="sales_title">Sales</string>
+    <string name="action_add_sale">Add sale</string>
+    <string name="sales_empty">No sales registered yet.</string>
+    <string name="sales_products_label">Products</string>
+    <string name="sales_customer_label">Customer</string>
+    <string name="sales_total_label">Sale total</string>
+    <string name="sales_paid_label">Payments</string>
+    <string name="sales_due_label">Outstanding</string>
+    <string name="sales_add_payment">Record payment</string>
+    <string name="sales_payments_header">Payment history</string>
+    <string name="sales_paid_in_full">Paid in full</string>
+    <string name="field_quantity">Quantity</string>
+
+    <string name="add_sale_title">New sale</string>
+    <string name="add_sale_step_products">Select products</string>
+    <string name="add_sale_step_customer">Select customer</string>
+    <string name="add_sale_step_review">Review and confirm</string>
+    <string name="add_sale_selected_products">Products in this sale</string>
+    <string name="add_sale_selected_customer">Selected customer</string>
+    <string name="add_sale_create_product">Create product</string>
+    <string name="add_sale_create_customer">Create customer</string>
+    <string name="add_sale_product_search_placeholder">Search products</string>
+    <string name="add_sale_customer_search_placeholder">Search customers</string>
+    <string name="add_sale_no_products_hint">Add at least one product to continue.</string>
+    <string name="add_sale_no_customers_hint">Select or create a customer to continue.</string>
+    <string name="add_sale_total">Total</string>
+    <string name="add_sale_outstanding">Outstanding</string>
+    <string name="add_sale_confirm">Confirm sale</string>
+    <string name="action_back">Back</string>
+    <string name="action_next">Next</string>
+    <string name="action_select">Select</string>
+    <string name="add_sale_review_hint">Review the order details before finishing.</string>
+    <string name="action_add">Add</string>
+
+    <!-- Payments -->
+    <string name="sales_payment_dialog_title">Record payment</string>
+    <string name="sales_payment_dialog_outstanding">Outstanding balance: %1$s</string>
+    <string name="sales_payment_dialog_amount_label">Payment amount</string>
+    <string name="sales_payment_dialog_hint">Enter the amount paid by the customer.</string>
+    <string name="sales_payment_dialog_confirm">Save payment</string>
+
+    <!-- Home -->
+    <string name="home_greeting">Hi %1$s, what would you like to do today?</string>
+    <string name="home_action_add_payment">Record payment</string>
+    <string name="home_action_add_client">Add client</string>
+    <string name="home_action_add_expense">Add expense</string>
+    <string name="home_summary_expenses">Expenses</string>
+    <string name="home_summary_purchases">Product purchases</string>
+    <string name="home_summary_profit">Profit</string>
+
     <plurals name="customers_count">
         <item quantity="one">%d customer</item>
         <item quantity="other">%d customers</item>

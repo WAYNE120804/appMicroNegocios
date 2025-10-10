@@ -7,14 +7,24 @@ import androidx.room.RoomDatabase
 import com.sebas.tiendaropa.data.dao.CategoryDao
 import com.sebas.tiendaropa.data.dao.CustomerDao
 import com.sebas.tiendaropa.data.dao.ProductDao
+import com.sebas.tiendaropa.data.dao.SaleDao
 import com.sebas.tiendaropa.data.entity.CategoryEntity
 import com.sebas.tiendaropa.data.entity.CustomerEntity
+import com.sebas.tiendaropa.data.entity.PaymentEntity
 import com.sebas.tiendaropa.data.entity.ProductEntity
+import com.sebas.tiendaropa.data.entity.SaleEntity
+import com.sebas.tiendaropa.data.entity.SaleItemEntity
+
 
 @Database(
-    entities = [CustomerEntity::class,
+    entities = [
+        CustomerEntity::class,
         CategoryEntity::class,
-        ProductEntity::class],
+        ProductEntity::class,
+        SaleEntity::class,
+        SaleItemEntity::class,
+        PaymentEntity::class
+               ],
     version = 1,
     exportSchema = true
 )
@@ -22,6 +32,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun customerDao() : CustomerDao
     abstract fun categoryDao() : CategoryDao
     abstract fun productDao(): ProductDao
+    abstract fun saleDao() : SaleDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
