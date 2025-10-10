@@ -14,7 +14,24 @@
     <string name="search_placeholder">Search by name or phone</string>
     <string name="categories_title">Categories</string>
     <string name="new_category_title">New category</string>
+    <string name="edit">Edit</string>
+    <string name="delete">Delete</string>
 
+    <!-- Products -->
+    <string name="products_title">Products</string>
+    <string name="new_product_title">New product</string>
+    <string name="edit_product_title">Edit product</string>
+    <string name="products_search_label">Product</string>
+    <string name="products_search_placeholder">Search by name, description or notes</string>
+    <string name="field_description">Description</string>
+    <string name="field_avisos">Notes</string>
+    <string name="field_category">Category</string>
+    <string name="field_purchase_price">Purchase price</string>
+    <string name="field_sale_price">Sale price</string>
+    <string name="field_profit">Profit</string>
+    <string name="products_unknown_category">Unassigned category</string>
+    <string name="products_empty_categories">Add a category first</string>
+    <string name="products_need_category_hint">You need at least one category to create products.</string>
 
 
     <plurals name="customers_count">

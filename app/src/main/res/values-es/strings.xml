@@ -18,6 +18,21 @@
     <string name="categories_title">Categorías</string>
     <string name="new_category_title">Nueva categoría</string>
 
+    <!-- Productos -->
+    <string name="products_title">Productos</string>
+    <string name="new_product_title">Nuevo producto</string>
+    <string name="edit_product_title">Editar producto</string>
+    <string name="products_search_label">Producto</string>
+    <string name="products_search_placeholder">Buscar por nombre, descripción o aviso</string>
+    <string name="field_description">Descripción</string>
+    <string name="field_avisos">Avisos</string>
+    <string name="field_category">Categoría</string>
+    <string name="field_purchase_price">Valor de compra</string>
+    <string name="field_sale_price">Valor de venta</string>
+    <string name="field_profit">Ganancia</string>
+    <string name="products_unknown_category">Categoría no asignada</string>
+    <string name="products_empty_categories">Agrega una categoría primero</string>
+    <string name="products_need_category_hint">Necesitas al menos una categoría para crear productos.</string>
 
 
 

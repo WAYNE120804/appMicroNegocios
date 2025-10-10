@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.sebas.tiendaropa.data.db.AppDatabase
+import com.sebas.tiendaropa.data.entity.CategoryEntity
 import com.sebas.tiendaropa.data.entity.ProductEntity
+import com.sebas.tiendaropa.data.repo.CategoryRepository
 import com.sebas.tiendaropa.data.repo.ProductsRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -16,9 +18,12 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
-class ProductsViewModel(private val repo: ProductsRepository) : ViewModel() {
+class ProductsViewModel(
+    private val repo: ProductsRepository,
+    private val categoryRepo: CategoryRepository
+) : ViewModel(){
 
-    // ---- Búsqueda (igual a CategoriesViewModel) ----
+// ---- Búsqueda (igual a CategoriesViewModel) ----
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query
     fun setQuery(q: String) { _query.value = q }
@@ -26,6 +31,14 @@ class ProductsViewModel(private val repo: ProductsRepository) : ViewModel() {
     val products = repo.products.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList()
     )
+
+val categories: StateFlow<List<CategoryEntity>> =
+    categoryRepo.categories.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000),
+        emptyList()
+    )
+
 
     val visibleProducts: StateFlow<List<ProductEntity>> =
         _query
@@ -59,8 +72,8 @@ class ProductsViewModel(private val repo: ProductsRepository) : ViewModel() {
         val venta  = pesosToCents(valorVentaPesos)
         if (name.isNotBlank() && compra != null && venta != null) {
             repo.add(name.trim(),
-                description?.takeIf { it.isNotBlank() },
-                avisos?.takeIf { it.isNotBlank() },
+                description?.trim()?.takeIf { it.isNotBlank() },
+                avisos?.trim()?.takeIf { it.isNotBlank() },
                 categoryId,
                 compra, venta
             )
@@ -80,8 +93,8 @@ class ProductsViewModel(private val repo: ProductsRepository) : ViewModel() {
         val venta  = pesosToCents(valorVentaPesos)
         if (name.isNotBlank() && compra != null && venta != null) {
             repo.update(id, name.trim(),
-                description?.takeIf { it.isNotBlank() },
-                avisos?.takeIf { it.isNotBlank() },
+                description?.trim()?.takeIf { it.isNotBlank() },
+                avisos?.trim()?.takeIf { it.isNotBlank() },
                 categoryId,
                 compra, venta
             )
@@ -114,8 +127,9 @@ class ProductsViewModel(private val repo: ProductsRepository) : ViewModel() {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
                 val db = AppDatabase.get(ctx)
                 val repo = ProductsRepository(db.productDao())
+                val categories = CategoryRepository(db.categoryDao())
                 @Suppress("UNCHECKED_CAST")
-                return ProductsViewModel(repo) as T
+                return ProductsViewModel(repo, categories) as T
             }
         }
     }

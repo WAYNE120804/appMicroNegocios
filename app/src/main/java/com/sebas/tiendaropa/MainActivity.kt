@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -49,6 +50,7 @@ import com.sebas.tiendaropa.ui.categories.CategoriesViewModel
 import com.sebas.tiendaropa.ui.customers.CustomersScreen
 import com.sebas.tiendaropa.ui.customers.CustomersViewModel
 import com.sebas.tiendaropa.ui.home.HomeScreen
+import com.sebas.tiendaropa.ui.products.ProductsScreen
 import com.sebas.tiendaropa.ui.products.ProductsViewModel
 import com.sebas.tiendaropa.ui.settings.SettingsScreen
 import com.sebas.tiendaropa.ui.settings.SettingsViewModel
@@ -90,11 +92,13 @@ class MainActivity : ComponentActivity() {
                     DrawerItem(Routes.Home,       "Inicio",        Icons.Default.Home),
                     DrawerItem(Routes.Customers,  "Clientes",      Icons.Default.People),
                     DrawerItem(Routes.Categories, "Categorías",    Icons.Default.Category),
-                    //DrawerItem(Routes.Products,   "Productos",     Icons.Default.ShoppingCart),
+                    DrawerItem(Routes.Products,   "Productos",     Icons.Default.ShoppingCart),
                     DrawerItem(Routes.Settings,   "Configuración", Icons.Default.Settings),
                 )
 
                 val settingsState = settingsVm.state.collectAsState().value
+                val totalCompras = productsVm.totalCompras.collectAsState().value
+                val totalGanancia = productsVm.totalGanancia.collectAsState().value
 
                 ModalNavigationDrawer(
                     drawerState = drawerState,
@@ -158,8 +162,8 @@ class MainActivity : ComponentActivity() {
                                 HomeScreen(
                                     settings = settingsState,
                                     totalExpenses = 0.0,
-                                    totalPurchases = 0.0,
-                                    totalProfit = 0.0,
+                                    totalPurchases = totalCompras / 100.0,
+                                    totalProfit = totalGanancia / 100.0,
                                     onAddSale = { nav.navigate(Routes.AddSale) },
                                     onAddPayment = { nav.navigate(Routes.AddPayment) },
                                     onAddClient = { nav.navigate(Routes.Customers) },
@@ -168,6 +172,7 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(Routes.Customers) { CustomersScreen(customersVm) }
                             composable(Routes.Categories) { CategoriesScreen(categoriesVm) }
+                            composable(Routes.Products) { ProductsScreen(productsVm) }
 
                             composable(Routes.Settings) {
                                 SettingsScreen(
@@ -193,12 +198,14 @@ class MainActivity : ComponentActivity() {
 private object Routes {
     const val Home = "home"
     const val Customers = "customers"
+    const val Products = "products"
     const val Categories = "categories"
     const val Settings = "settings"
     const val AddSale = "addSale"
     const val AddPayment = "addPayment"
     const val Expenses = "expenses"
-    //const val Products = "products"
+
+
 }
 
 @Composable
