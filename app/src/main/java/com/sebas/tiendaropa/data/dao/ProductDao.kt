@@ -24,8 +24,14 @@ interface ProductDao {
     @Query("SELECT * FROM products ORDER BY name ASC")
     fun observeAll(): Flow<List<ProductEntity>>
 
+    @Query("SELECT * FROM products WHERE soldSaleId IS NULL ORDER BY name ASC")
+    fun observeAvailable(): Flow<List<ProductEntity>>
+
+    @Query("SELECT * FROM products WHERE soldSaleId IS NOT NULL ORDER BY name ASC")
+    fun observeSold(): Flow<List<ProductEntity>>
+
     @Query("""
-        SELECT * FROM products 
+        SELECT * FROM products
         WHERE name LIKE :q OR IFNULL(description,'') LIKE :q OR IFNULL(avisos,'') LIKE :q
         ORDER BY name ASC
     """)
@@ -37,4 +43,10 @@ interface ProductDao {
 
     @Query("SELECT COALESCE(SUM(valorVentaCents - valorCompraCents),0) FROM products")
     fun observeTotalGanancia(): Flow<Long>
+
+    @Query("UPDATE products SET soldSaleId = :saleId WHERE id IN (:productIds)")
+    suspend fun markAsSold(productIds: List<Long>, saleId: Long)
+
+    @Query("UPDATE products SET soldSaleId = NULL WHERE id IN (:productIds)")
+    suspend fun markAsAvailable(productIds: List<Long>)
 }

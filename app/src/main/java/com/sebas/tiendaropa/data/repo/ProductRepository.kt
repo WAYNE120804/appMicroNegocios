@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.Flow
 class ProductsRepository(private val dao: ProductDao) {
 
     val products: Flow<List<ProductEntity>> = dao.observeAll()
+    val availableProducts: Flow<List<ProductEntity>> = dao.observeAvailable()
+    val soldProducts: Flow<List<ProductEntity>> = dao.observeSold()
 
     fun search(q: String): Flow<List<ProductEntity>> =
         dao.search("%${q}%")
@@ -20,7 +22,8 @@ class ProductsRepository(private val dao: ProductDao) {
         avisos: String?,
         categoryId: Long,            // obligatorio
         compraCents: Long,
-        ventaCents: Long
+        ventaCents: Long,
+        imageUris: List<String>
     ): Long = dao.insert(
         ProductEntity(
             name = name,
@@ -28,7 +31,8 @@ class ProductsRepository(private val dao: ProductDao) {
             avisos = avisos,
             categoryId = categoryId,
             valorCompraCents = compraCents,
-            valorVentaCents = ventaCents
+            valorVentaCents = ventaCents,
+            imageUris = imageUris
         )
     )
 
@@ -39,7 +43,9 @@ class ProductsRepository(private val dao: ProductDao) {
         avisos: String?,
         categoryId: Long,
         compraCents: Long,
-        ventaCents: Long
+        ventaCents: Long,
+        imageUris: List<String>,
+        soldSaleId: Long? = null
     ) = dao.update(
         ProductEntity(
             id = id,
@@ -48,9 +54,21 @@ class ProductsRepository(private val dao: ProductDao) {
             avisos = avisos,
             categoryId = categoryId,
             valorCompraCents = compraCents,
-            valorVentaCents = ventaCents
+            valorVentaCents = ventaCents,
+            imageUris = imageUris,
+            soldSaleId = soldSaleId
         )
     )
 
     suspend fun remove(entity: ProductEntity) = dao.delete(entity)
+
+    suspend fun markProductsAsSold(productIds: List<Long>, saleId: Long) {
+        if (productIds.isEmpty()) return
+        dao.markAsSold(productIds, saleId)
+    }
+
+    suspend fun markProductsAsAvailable(productIds: List<Long>) {
+        if (productIds.isEmpty()) return
+        dao.markAsAvailable(productIds)
+    }
 }

@@ -18,6 +18,8 @@ interface CustomerDao {
     SELECT * FROM customers
     WHERE name  LIKE '%' || :q || '%'
        OR phone LIKE '%' || :q || '%'
+       OR IFNULL(cedula, '') LIKE '%' || :q || '%'
+       OR IFNULL(description, '') LIKE '%' || :q || '%'
     ORDER BY name ASC
 """)
     fun search(q: String): kotlinx.coroutines.flow.Flow<List<com.sebas.tiendaropa.data.entity.CustomerEntity>>

@@ -68,7 +68,12 @@ fun CustomersScreen(vm: CustomersViewModel) {
                 ListItem(
                     headlineContent = { Text(c.name) },
                     supportingContent = {
-                        Text(listOfNotNull(c.phone, c.address).joinToString(" • "))
+                        Column {
+                            Text(listOfNotNull(c.phone, c.address, c.cedula).joinToString(" • "))
+                            c.description?.takeIf { it.isNotBlank() }?.let { desc ->
+                                Text(desc)
+                            }
+                        }
                     },
                     trailingContent = {
                         Row {
@@ -90,9 +95,9 @@ fun CustomersScreen(vm: CustomersViewModel) {
         CustomerDialog(
             initial = initial,
             onDismiss = { showDialog.value = false },
-            onSave = { name, addr, phone ->
-                if (initial == null) vm.saveNew(name, addr, phone)
-                else vm.saveEdit(initial.id, name, addr, phone)
+            onSave = { name, addr, phone, cedula, description ->
+                if (initial == null) vm.saveNew(name, addr, phone, cedula, description)
+                else vm.saveEdit(initial.id, name, addr, phone, cedula, description)
                 showDialog.value = false
             }
         )
@@ -103,11 +108,13 @@ fun CustomersScreen(vm: CustomersViewModel) {
 private fun CustomerDialog(
     initial: CustomerEntity?,
     onDismiss: () -> Unit,
-    onSave: (String, String?, String?) -> Unit
+    onSave: (String, String?, String?, String?, String?) -> Unit
 ) {
     val name = remember { mutableStateOf(initial?.name ?: "") }
     val address = remember { mutableStateOf(initial?.address ?: "") }
     val phone = remember { mutableStateOf(initial?.phone ?: "") }
+    val cedula = remember { mutableStateOf(initial?.cedula ?: "") }
+    val description = remember { mutableStateOf(initial?.description ?: "") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -138,6 +145,18 @@ private fun CustomerDialog(
                     onValueChange = { phone.value = it },
                     label = { Text(stringResource(R.string.field_phone)) }
                 )
+                Spacer(Modifier.padding(top = 8.dp))
+                OutlinedTextField(
+                    value = cedula.value,
+                    onValueChange = { cedula.value = it },
+                    label = { Text("Cédula") }
+                )
+                Spacer(Modifier.padding(top = 8.dp))
+                OutlinedTextField(
+                    value = description.value,
+                    onValueChange = { description.value = it },
+                    label = { Text(stringResource(R.string.field_description)) }
+                )
             }
         },
         confirmButton = {
@@ -145,7 +164,9 @@ private fun CustomerDialog(
                 onSave(
                     name.value,
                     address.value.ifBlank { null },
-                    phone.value.ifBlank { null }
+                    phone.value.ifBlank { null },
+                    cedula.value.ifBlank { null },
+                    description.value.ifBlank { null }
                 )
             }) { Text(stringResource(R.string.action_save)) }
         },

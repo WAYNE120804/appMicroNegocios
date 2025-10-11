@@ -1,5 +1,10 @@
 package com.sebas.tiendaropa.ui.sales
 
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.net.Uri
+import android.view.View
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -43,26 +49,38 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
+import androidx.core.view.drawToBitmap
+import coil.compose.AsyncImage
 import com.sebas.tiendaropa.data.dao.SaleWithDetails
 import com.sebas.tiendaropa.data.entity.CategoryEntity
 import com.sebas.tiendaropa.data.entity.PaymentEntity
 import com.sebas.tiendaropa.data.entity.ProductEntity
+import com.sebas.tiendaropa.data.prefs.SettingsRepository
+import com.sebas.tiendaropa.data.prefs.SettingsState
 import com.sebas.tiendaropa.ui.common.currencyFormatter
 import com.sebas.tiendaropa.ui.common.formatPesosInput
 import com.sebas.tiendaropa.ui.common.integerFormatter
 import com.sebas.tiendaropa.ui.common.parsePesosToCents
+import java.io.File
+import java.io.FileOutputStream
 import java.text.DateFormat
 import java.text.NumberFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +92,10 @@ fun SalesScreen(
     val currency = remember { currencyFormatter() }
     var paymentTarget by remember { mutableStateOf<SaleWithDetails?>(null) }
     val isSavingPayment by vm.isSavingPayment.collectAsState()
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val settingsRepo = remember(context) { SettingsRepository(context) }
+    val settings by settingsRepo.state.collectAsState(initial = SettingsState())
 
     Scaffold(
         topBar = {
@@ -110,7 +132,12 @@ fun SalesScreen(
                     SaleRow(
                         details = sale,
                         currency = currency,
-                        onAddPayment = { paymentTarget = it }
+                        onAddPayment = { paymentTarget = it },
+                        onShare = { details ->
+                            scope.launch {
+                                shareSaleReceipt(context, details, settings, currency)
+                            }
+                        }
                     )
                     Divider()
                 }
@@ -124,8 +151,8 @@ fun SalesScreen(
             currency = currency,
             isSaving = isSavingPayment,
             onDismiss = { paymentTarget = null },
-            onConfirm = { amount ->
-                vm.addPayment(target.sale.id, amount) {
+            onConfirm = { amount, description ->
+                vm.addPayment(target.sale.id, amount, description) {
                     paymentTarget = null
                 }
             }
@@ -137,7 +164,8 @@ fun SalesScreen(
 private fun SaleRow(
     details: SaleWithDetails,
     currency: NumberFormat,
-    onAddPayment: (SaleWithDetails) -> Unit
+    onAddPayment: (SaleWithDetails) -> Unit,
+    onShare: (SaleWithDetails) -> Unit
 ) {
     val total = currency.format(details.sale.totalCents / 100.0)
     val paid = currency.format(details.totalPaidCents / 100.0)
@@ -167,8 +195,13 @@ private fun SaleRow(
             }
         },
         trailingContent = {
-            TextButton(onClick = { onAddPayment(details) }, enabled = canAddPayment) {
-                Text(salesString("sales_add_payment", "Record payment"))
+            Column(horizontalAlignment = Alignment.End) {
+                TextButton(onClick = { onShare(details) }) {
+                    Text(salesString("sales_share_button", "Share history"))
+                }
+                TextButton(onClick = { onAddPayment(details) }, enabled = canAddPayment) {
+                    Text(salesString("sales_add_payment", "Record payment"))
+                }
             }
         }
     )
@@ -179,7 +212,7 @@ private fun PaymentHistory(payments: List<PaymentEntity>, currency: NumberFormat
     if (payments.isEmpty()) return
 
     val locale = Locale.getDefault()
-    val dateFormatter = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
+    val dateFormatter = remember(locale) { DateFormat.getDateTimeInstance(DateFormat.MEDIUM, DateFormat.SHORT, locale) }
 
     Column(
         modifier = Modifier.padding(top = 8.dp),
@@ -192,7 +225,14 @@ private fun PaymentHistory(payments: List<PaymentEntity>, currency: NumberFormat
         payments.sortedByDescending { it.createdAtMillis }.forEach { payment ->
             val dateText = dateFormatter.format(Date(payment.createdAtMillis))
             val amount = currency.format(payment.amountCents / 100.0)
-            Text("• $amount — $dateText")
+            val line = buildString {
+                append("• $amount — $dateText")
+                payment.description?.takeIf { it.isNotBlank() }?.let {
+                    append(" — ")
+                    append(it)
+                }
+            }
+            Text(line)
         }
     }
 }
@@ -203,9 +243,10 @@ private fun AddPaymentDialog(
     currency: NumberFormat,
     isSaving: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (String) -> Unit
+    onConfirm: (String, String?) -> Unit
 ) {
     var amount by rememberSaveable { mutableStateOf("") }
+    var description by rememberSaveable { mutableStateOf("") }
     val formatter = remember { integerFormatter() }
     val formattedDue = remember(sale.amountDueCents) { currency.format(sale.amountDueCents / 100.0) }
     val cents = remember(amount) { parsePesosToCents(amount) }
@@ -228,6 +269,14 @@ private fun AddPaymentDialog(
                         .fillMaxWidth()
                         .padding(top = 8.dp)
                 )
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text(salesString("field_description", "Description")) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                )
                 Text(
                     text = salesString("sales_payment_dialog_hint", "Enter the amount paid by the customer."),
                     style = MaterialTheme.typography.bodySmall,
@@ -237,7 +286,7 @@ private fun AddPaymentDialog(
         },
         confirmButton = {
             FilledTonalButton(
-                onClick = { if (canSave) onConfirm(amount) },
+                onClick = { if (canSave) onConfirm(amount, description.takeIf { it.isNotBlank() }) },
                 enabled = canSave
             ) {
                 Text(salesString("sales_payment_dialog_confirm", "Save payment"))
@@ -251,6 +300,121 @@ private fun AddPaymentDialog(
     )
 }
 
+private suspend fun shareSaleReceipt(
+    context: Context,
+    details: SaleWithDetails,
+    settings: SettingsState,
+    currency: NumberFormat
+) {
+    val bitmap = withContext(Dispatchers.Main) {
+        val composeView = ComposeView(context)
+        composeView.setContent {
+            MaterialTheme {
+                PaymentReceiptShareLayout(details = details, settings = settings, currency = currency)
+            }
+        }
+        val width = context.resources.displayMetrics.widthPixels
+        composeView.measure(
+            View.MeasureSpec.makeMeasureSpec(width, View.MeasureSpec.EXACTLY),
+            View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+        )
+        composeView.layout(0, 0, composeView.measuredWidth, composeView.measuredHeight)
+        composeView.drawToBitmap(Bitmap.Config.ARGB_8888)
+    }
+
+    val uri = withContext(Dispatchers.IO) {
+        val imagesDir = File(context.cacheDir, "images").apply { mkdirs() }
+        val safeName = details.customer.name.replace("\s+".toRegex(), "_")
+        val file = File(imagesDir, "historial_${safeName}_${System.currentTimeMillis()}.png")
+        FileOutputStream(file).use { out ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
+        }
+        FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+    }
+
+    withContext(Dispatchers.Main) {
+        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+            type = "image/png"
+            putExtra(Intent.EXTRA_STREAM, uri)
+            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        }
+        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.sales_share_title)))
+    }
+}
+
+@Composable
+private fun PaymentReceiptShareLayout(
+    details: SaleWithDetails,
+    settings: SettingsState,
+    currency: NumberFormat
+) {
+    val locale = Locale.getDefault()
+    val dateFormatter = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
+    val timeFormatter = remember(locale) { DateFormat.getTimeInstance(DateFormat.SHORT, locale) }
+    val generatedText = remember {
+        dateFormatter.format(Date(System.currentTimeMillis()))
+    }
+    val totalText = currency.format(details.sale.totalCents / 100.0)
+    val paidText = currency.format(details.totalPaidCents / 100.0)
+    val outstandingText = currency.format(details.amountDueCents / 100.0)
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            settings.logoUri?.let {
+                AsyncImage(
+                    model = it,
+                    contentDescription = null,
+                    modifier = Modifier.size(72.dp)
+                )
+            }
+            Text(settings.storeName, style = MaterialTheme.typography.headlineSmall)
+            Text(settings.ownerName, style = MaterialTheme.typography.bodyMedium)
+        }
+
+        Card {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(stringResource(R.string.sales_share_customer_info), style = MaterialTheme.typography.titleSmall)
+                Text(details.customer.name)
+                details.customer.cedula?.let { Text("C.C.: $it") }
+                details.customer.phone?.let { Text(it) }
+                details.customer.address?.let { Text(it) }
+            }
+        }
+
+        Card {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.sales_share_total_debt) + ": " + totalText)
+                Text(stringResource(R.string.sales_share_total_paid) + ": " + paidText)
+                Text(stringResource(R.string.sales_share_current_debt) + ": " + outstandingText)
+            }
+        }
+
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.sales_share_payments_title), style = MaterialTheme.typography.titleSmall)
+            if (details.payments.isEmpty()) {
+                Text(salesString("sales_payments_header", "Payment history") + ": 0")
+            } else {
+                details.payments
+                    .sortedByDescending { it.createdAtMillis }
+                    .forEach { payment ->
+                        val date = Date(payment.createdAtMillis)
+                        val lineDate = "${dateFormatter.format(date)} ${timeFormatter.format(date)}"
+                        val amount = currency.format(payment.amountCents / 100.0)
+                        val description = payment.description?.let { " — $it" } ?: ""
+                        Text("$amount — $lineDate$description")
+                    }
+            }
+        }
+
+        Text(stringResource(R.string.sales_share_generated_on, generatedText), style = MaterialTheme.typography.bodySmall)
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSaleScreen(
@@ -258,7 +422,7 @@ fun AddSaleScreen(
     onFinished: () -> Unit
 ) {
     val step by vm.step.collectAsState()
-    val products by vm.products.collectAsState()
+    val products by vm.availableProducts.collectAsState()
     val customers by vm.customers.collectAsState()
     val draft by vm.draft.collectAsState()
     val canContinue by vm.draftCanContinueToCustomer.collectAsState()
@@ -499,8 +663,8 @@ fun AddSaleScreen(
     if (showCustomerDialog) {
         CreateCustomerDialog(
             onDismiss = { showCustomerDialog = false },
-            onSave = { name, address, phone ->
-                vm.createCustomer(name, address, phone)
+            onSave = { name, address, phone, cedula, notes ->
+                vm.createCustomer(name, address, phone, cedula, notes)
                 showCustomerDialog = false
             }
         )
@@ -725,11 +889,13 @@ private fun CategoryDropdown(
 @Composable
 private fun CreateCustomerDialog(
     onDismiss: () -> Unit,
-    onSave: (String, String?, String?) -> Unit
+    onSave: (String, String?, String?, String?, String?) -> Unit
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var address by rememberSaveable { mutableStateOf("") }
     var phone by rememberSaveable { mutableStateOf("") }
+    var cedula by rememberSaveable { mutableStateOf("") }
+    var notes by rememberSaveable { mutableStateOf("") }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -758,12 +924,34 @@ private fun CreateCustomerDialog(
                         .fillMaxWidth()
                         .padding(top = 8.dp)
                 )
+                OutlinedTextField(
+                    value = cedula,
+                    onValueChange = { cedula = it },
+                    label = { Text("Cédula" ) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                )
+                OutlinedTextField(
+                    value = notes,
+                    onValueChange = { notes = it },
+                    label = { Text(salesString("field_description", "Notes")) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                )
             }
         },
         confirmButton = {
             FilledTonalButton(onClick = {
                 if (name.isNotBlank()) {
-                    onSave(name, address.takeIf { it.isNotBlank() }, phone.takeIf { it.isNotBlank() })
+                    onSave(
+                        name,
+                        address.takeIf { it.isNotBlank() },
+                        phone.takeIf { it.isNotBlank() },
+                        cedula.takeIf { it.isNotBlank() },
+                        notes.takeIf { it.isNotBlank() }
+                    )
                 }
             }, enabled = name.isNotBlank()) {
                 Text(salesString("action_save", "Save"))

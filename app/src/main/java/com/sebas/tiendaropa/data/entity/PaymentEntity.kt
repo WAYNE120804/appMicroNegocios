@@ -21,5 +21,6 @@ data class PaymentEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val saleId: Long,
     val amountCents: Long,
-    val createdAtMillis: Long
+    val createdAtMillis: Long,
+    val description: String? = null
 )

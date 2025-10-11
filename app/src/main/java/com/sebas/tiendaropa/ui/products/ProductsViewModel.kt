@@ -13,6 +13,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.stateIn
@@ -28,9 +29,23 @@ class ProductsViewModel(
     val query: StateFlow<String> = _query
     fun setQuery(q: String) { _query.value = q }
 
+    private val _filter = MutableStateFlow(ProductFilter.ALL)
+    val filter: StateFlow<ProductFilter> = _filter.asStateFlow()
+    fun setFilter(filter: ProductFilter) { _filter.value = filter }
+
     val products = repo.products.stateIn(
         viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList()
     )
+
+    private val filteredSource = _filter
+        .flatMapLatest { filter ->
+            when (filter) {
+                ProductFilter.ALL -> repo.products
+                ProductFilter.AVAILABLE -> repo.availableProducts
+                ProductFilter.SOLD -> repo.soldProducts
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
 val categories: StateFlow<List<CategoryEntity>> =
     categoryRepo.categories.stateIn(
@@ -41,11 +56,21 @@ val categories: StateFlow<List<CategoryEntity>> =
 
 
     val visibleProducts: StateFlow<List<ProductEntity>> =
-        _query
-            .debounce(200)
-            .flatMapLatest { q ->
-                if (q.isBlank()) repo.products else repo.search(q.trim())
+        combine(
+            filteredSource,
+            _query.debounce(200)
+        ) { products, q ->
+            if (q.isBlank()) {
+                products
+            } else {
+                val term = q.trim()
+                products.filter {
+                    it.name.contains(term, ignoreCase = true) ||
+                            (it.description?.contains(term, ignoreCase = true) == true) ||
+                            (it.avisos?.contains(term, ignoreCase = true) == true)
+                }
             }
+        }
             .stateIn(
                 viewModelScope,
                 SharingStarted.WhileSubscribed(5_000),
@@ -66,7 +91,8 @@ val categories: StateFlow<List<CategoryEntity>> =
         avisos: String?,
         categoryId: Long,       // obligatorio
         valorCompraPesos: String,
-        valorVentaPesos: String
+        valorVentaPesos: String,
+        images: List<String>
     ) = viewModelScope.launch {
         val compra = pesosToCents(valorCompraPesos)
         val venta  = pesosToCents(valorVentaPesos)
@@ -75,7 +101,8 @@ val categories: StateFlow<List<CategoryEntity>> =
                 description?.trim()?.takeIf { it.isNotBlank() },
                 avisos?.trim()?.takeIf { it.isNotBlank() },
                 categoryId,
-                compra, venta
+                compra, venta,
+                images
             )
         }
     }
@@ -87,7 +114,9 @@ val categories: StateFlow<List<CategoryEntity>> =
         avisos: String?,
         categoryId: Long,
         valorCompraPesos: String,
-        valorVentaPesos: String
+        valorVentaPesos: String,
+        images: List<String>,
+        soldSaleId: Long?
     ) = viewModelScope.launch {
         val compra = pesosToCents(valorCompraPesos)
         val venta  = pesosToCents(valorVentaPesos)
@@ -96,7 +125,9 @@ val categories: StateFlow<List<CategoryEntity>> =
                 description?.trim()?.takeIf { it.isNotBlank() },
                 avisos?.trim()?.takeIf { it.isNotBlank() },
                 categoryId,
-                compra, venta
+                compra, venta,
+                images,
+                soldSaleId
             )
         }
     }
@@ -134,4 +165,6 @@ val categories: StateFlow<List<CategoryEntity>> =
         }
     }
 }
+
+enum class ProductFilter { ALL, AVAILABLE, SOLD }
 
