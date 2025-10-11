@@ -3,7 +3,6 @@ package com.sebas.tiendaropa.ui.sales
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.net.Uri
 import android.view.View
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,8 +12,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
@@ -62,6 +61,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.view.drawToBitmap
 import coil.compose.AsyncImage
+import com.sebas.tiendaropa.R
 import com.sebas.tiendaropa.data.dao.SaleWithDetails
 import com.sebas.tiendaropa.data.entity.CategoryEntity
 import com.sebas.tiendaropa.data.entity.PaymentEntity
@@ -72,15 +72,15 @@ import com.sebas.tiendaropa.ui.common.currencyFormatter
 import com.sebas.tiendaropa.ui.common.formatPesosInput
 import com.sebas.tiendaropa.ui.common.integerFormatter
 import com.sebas.tiendaropa.ui.common.parsePesosToCents
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.File
 import java.io.FileOutputStream
 import java.text.DateFormat
 import java.text.NumberFormat
 import java.util.Date
 import java.util.Locale
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -324,7 +324,7 @@ private suspend fun shareSaleReceipt(
 
     val uri = withContext(Dispatchers.IO) {
         val imagesDir = File(context.cacheDir, "images").apply { mkdirs() }
-        val safeName = details.customer.name.replace("\s+".toRegex(), "_")
+        val safeName = details.customer.name.replace(Regex("""\s+"""), "_")
         val file = File(imagesDir, "historial_${safeName}_${System.currentTimeMillis()}.png")
         FileOutputStream(file).use { out ->
             bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
@@ -414,6 +414,7 @@ private fun PaymentReceiptShareLayout(
         Text(stringResource(R.string.sales_share_generated_on, generatedText), style = MaterialTheme.typography.bodySmall)
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

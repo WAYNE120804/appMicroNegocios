@@ -193,37 +193,38 @@ class MainActivity : ComponentActivity() {
                                     onAddSale = { nav.navigate(Routes.AddSale) }
                                 )
 
-                                composable(Routes.Settings) {
-                                    SettingsScreen(
-                                        state = settingsState,
-                                        onSetStoreName = settingsVm::setStoreName,
-                                        onSetOwnerName = settingsVm::setOwnerName,
-                                        onSetLogoUri = settingsVm::setLogoUri,
-                                        onSetPinEnabled = settingsVm::setPinEnabled,
-                                        onSetBiometricEnabled = settingsVm::setBiometricEnabled
-                                    )
-                                }
-                                composable(Routes.AddSale) {
-                                    AddSaleScreen(
-                                        vm = salesVm,
-                                        onFinished = {
-                                            nav.navigate(Routes.Sales) {
-                                                popUpTo(nav.graph.findStartDestination().id) {
-                                                    saveState = true
-                                                }
-                                                launchSingleTop = true
-                                                restoreState = true
-                                            }
-                                        }
-                                    )
-                                }
-                                composable(Routes.Expenses) { CenterText("Gastos — En construcción") }
                             }
+                            composable(Routes.Settings) {
+                                SettingsScreen(
+                                    state = settingsState,
+                                    onSetStoreName = settingsVm::setStoreName,
+                                    onSetOwnerName = settingsVm::setOwnerName,
+                                    onSetLogoUri = settingsVm::setLogoUri,
+                                    onSetPinEnabled = settingsVm::setPinEnabled,
+                                    onSetBiometricEnabled = settingsVm::setBiometricEnabled
+                                )
+                            }
+                            composable(Routes.AddSale) {
+                                AddSaleScreen(
+                                    vm = salesVm,
+                                    onFinished = {
+                                        nav.navigate(Routes.Sales) {
+                                            popUpTo(nav.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
+                                        }
+                                    }
+                                )
+                            }
+                                composable(Routes.Expenses) { CenterText("Gastos — En construcción") }
                         }
                     }
                 }
             }
         }
+    }
     }
 
     private object Routes {
@@ -257,4 +258,4 @@ class MainActivity : ComponentActivity() {
             restoreState = true
         }
     }
-}
+
