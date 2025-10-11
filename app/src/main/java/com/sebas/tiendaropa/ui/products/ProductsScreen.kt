@@ -1,7 +1,9 @@
 package com.sebas.tiendaropa.ui.products
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -60,6 +62,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.sebas.tiendaropa.R
@@ -72,6 +75,8 @@ import com.sebas.tiendaropa.ui.common.integerFormatter
 import com.sebas.tiendaropa.ui.common.parsePesosToCents
 import java.io.File
 import java.io.IOException
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -335,6 +340,29 @@ private fun ProductDialog(
         pendingCameraUri = null
     }
 
+    val cameraPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        if (granted) {
+            launchCameraCapture(
+                context = context,
+                imageUris = imageUris,
+                onUriCreated = { uri ->
+                    pendingCameraUri = uri
+                    captureLauncher.launch(uri)
+                }
+            )
+        } else {
+            Toast.makeText(
+                context,
+                context.getString(
+                    R.string
+                        .products_camera_permission_denied),
+                Toast.LENGTH_SHORT
+            ).show()
+        }
+    }
+
     val canSave = name.isNotBlank() && selectedCategoryId != null && categories.isNotEmpty()
     val profitPreview = remember(valorCompra, valorVenta) {
         val compra = parsePesosToCents(valorCompra)
@@ -399,12 +427,23 @@ private fun ProductDialog(
                             if (imageUris.size >= 3) {
                                 Toast.makeText(context, context.getString(R.string.products_max_photos), Toast.LENGTH_SHORT).show()
                             } else {
-                                val uri = createTempImageUri(context)
-                                if (uri == null) {
-                                    Toast.makeText(context, context.getString(R.string.products_camera_error), Toast.LENGTH_SHORT).show()
-                                } else {
-                                    pendingCameraUri = uri
-                                    captureLauncher.launch(uri)
+                                when {
+                                    ContextCompat.checkSelfPermission(
+                                        context,
+                                        Manifest.permission.CAMERA
+                                    ) == PackageManager.PERMISSION_GRANTED -> {
+                                        launchCameraCapture(
+                                            context = context,
+                                            imageUris = imageUris,
+                                            onUriCreated = { uri ->
+                                                pendingCameraUri = uri
+                                                captureLauncher.launch(uri)
+                                            }
+                                        )
+                                    }
+                                    else -> {
+                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
+                                    }
                                 }
                             }
                         }
@@ -532,6 +571,23 @@ private fun ProductDialog(
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
+}
+
+private fun launchCameraCapture(
+    context: Context,
+    imageUris: List<String>,
+    onUriCreated: (Uri) -> Unit
+) {
+    if (imageUris.size >= 3) {
+        Toast.makeText(context, context.getString(R.string.products_max_photos), Toast.LENGTH_SHORT).show()
+        return
+    }
+    val uri = createTempImageUri(context)
+    if (uri == null) {
+        Toast.makeText(context, context.getString(R.string.products_camera_error), Toast.LENGTH_SHORT).show()
+    } else {
+        onUriCreated(uri)
+    }
 }
 
 private fun createTempImageUri(context: Context): Uri? = try {
