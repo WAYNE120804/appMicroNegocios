@@ -21,5 +21,6 @@ data class SaleEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val customerId: Long,
     val createdAtMillis: Long,
-    val totalCents: Long
+    val totalCents: Long,
+    val description: String? = null
 )

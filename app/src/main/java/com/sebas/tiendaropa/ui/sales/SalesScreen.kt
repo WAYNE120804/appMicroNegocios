@@ -3,7 +3,10 @@ package com.sebas.tiendaropa.ui.sales
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.net.Uri
 import android.view.View
+import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -25,6 +28,8 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +47,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -53,14 +59,20 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.drawToBitmap
-import coil.compose.AsyncImage
+import coil.ImageLoader
+import coil.request.ImageRequest
+import coil.request.SuccessResult
 import com.sebas.tiendaropa.R
 import com.sebas.tiendaropa.data.dao.SaleWithDetails
 import com.sebas.tiendaropa.data.entity.CategoryEntity
@@ -88,10 +100,14 @@ fun SalesScreen(
     vm: SalesViewModel,
     onAddSale: () -> Unit
 ) {
-    val sales by vm.sales.collectAsState()
+    val allSales by vm.sales.collectAsState()
+    val sales by vm.filteredSales.collectAsState()
+    val searchQuery by vm.searchQuery.collectAsState()
     val currency = remember { currencyFormatter() }
     var paymentTarget by remember { mutableStateOf<SaleWithDetails?>(null) }
+    var editTarget by remember { mutableStateOf<SaleWithDetails?>(null) }
     val isSavingPayment by vm.isSavingPayment.collectAsState()
+    val isUpdatingSale by vm.isUpdatingSale.collectAsState()
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val settingsRepo = remember(context) { SettingsRepository(context) }
@@ -107,39 +123,70 @@ fun SalesScreen(
             }
         }
     ) { innerPadding ->
-        if (sales.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize(),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(Icons.Default.ReceiptLong, contentDescription = null)
-                Spacer(modifier = Modifier.padding(4.dp))
-                Text(salesString("sales_empty", "No sales registered yet."))
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier
-                    .padding(innerPadding)
-                    .fillMaxSize()
-            ) {
-                items(
-                    items = sales,
-                    key = { it.sale.id }
-                ) { sale ->
-                    SaleRow(
-                        details = sale,
-                        currency = currency,
-                        onAddPayment = { paymentTarget = it },
-                        onShare = { details ->
-                            scope.launch {
-                                shareSaleReceipt(context, details, settings, currency)
-                            }
+        Column(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = vm::setSearchQuery,
+                modifier = Modifier.fillMaxWidth(),
+                label = { Text(salesString("sales_search_customer_label", "Search customer")) },
+                placeholder = { Text(salesString("sales_search_customer_placeholder", "Customer name")) }
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            when {
+                allSales.isEmpty() -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = true),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Icon(Icons.Default.ReceiptLong, contentDescription = null)
+                        Spacer(modifier = Modifier.padding(4.dp))
+                        Text(salesString("sales_empty", "No sales registered yet."))
+                    }
+                }
+
+                sales.isEmpty() -> {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f, fill = true),
+                        verticalArrangement = Arrangement.Center,
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(salesString("sales_no_results", "No sales match your filters."))
+                    }
+                }
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier
+                            .weight(1f, fill = true)
+                            .fillMaxWidth()
+                    ) {
+                        items(
+                            items = sales,
+                            key = { it.sale.id }
+                        ) { sale ->
+                            SaleRow(
+                                details = sale,
+                                currency = currency,
+                                onAddPayment = { paymentTarget = it },
+                                onShare = { details ->
+                                    scope.launch {
+                                        shareSaleReceipt(context, details, settings, currency)
+                                    }
+                                },
+                                onEdit = { editTarget = it }
+                            )
+                            Divider()
                         }
-                    )
-                    Divider()
+                    }
                 }
             }
         }
@@ -158,6 +205,19 @@ fun SalesScreen(
             }
         )
     }
+
+    editTarget?.let { target ->
+        EditSaleDialog(
+            sale = target,
+            isSaving = isUpdatingSale,
+            onDismiss = { if (!isUpdatingSale) editTarget = null },
+            onConfirm = { millis, description ->
+                vm.updateSaleDetails(target.sale.id, millis, description) {
+                    editTarget = null
+                }
+            }
+        )
+    }
 }
 
 @Composable
@@ -165,7 +225,8 @@ private fun SaleRow(
     details: SaleWithDetails,
     currency: NumberFormat,
     onAddPayment: (SaleWithDetails) -> Unit,
-    onShare: (SaleWithDetails) -> Unit
+    onShare: (SaleWithDetails) -> Unit,
+    onEdit: (SaleWithDetails) -> Unit
 ) {
     val total = currency.format(details.sale.totalCents / 100.0)
     val paid = currency.format(details.totalPaidCents / 100.0)
@@ -175,15 +236,22 @@ private fun SaleRow(
         if (qty > 1) "${item.product.name} x$qty" else item.product.name
     }
     val canAddPayment = details.amountDueCents > 0
+    val locale = Locale.getDefault()
+    val dateFormatter = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
+    val saleDate = remember(details.sale.createdAtMillis) { Date(details.sale.createdAtMillis) }
 
     ListItem(
         headlineContent = { Text(details.customer.name) },
         supportingContent = {
             Column {
+                Text(salesString("sales_date_label", "Sale date") + ": " + dateFormatter.format(saleDate))
                 Text(salesString("sales_products_label", "Products") + ": " + productSummary)
                 Text(salesString("sales_total_label", "Sale total") + ": " + total)
                 Text(salesString("sales_paid_label", "Payments") + ": " + paid)
                 Text(salesString("sales_due_label", "Outstanding") + ": " + due)
+                details.sale.description?.takeIf { it.isNotBlank() }?.let {
+                    Text(salesString("field_description", "Description") + ": " + it)
+                }
                 if (!canAddPayment) {
                     Text(
                         text = salesString("sales_paid_in_full", "Paid in full"),
@@ -198,6 +266,9 @@ private fun SaleRow(
             Column(horizontalAlignment = Alignment.End) {
                 TextButton(onClick = { onShare(details) }) {
                     Text(salesString("sales_share_button", "Share history"))
+                }
+                TextButton(onClick = { onEdit(details) }) {
+                    Text(salesString("action_edit", "Edit"))
                 }
                 TextButton(onClick = { onAddPayment(details) }, enabled = canAddPayment) {
                     Text(salesString("sales_add_payment", "Record payment"))
@@ -233,6 +304,84 @@ private fun PaymentHistory(payments: List<PaymentEntity>, currency: NumberFormat
                 }
             }
             Text(line)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun EditSaleDialog(
+    sale: SaleWithDetails,
+    isSaving: Boolean,
+    onDismiss: () -> Unit,
+    onConfirm: (Long, String?) -> Unit
+) {
+    var selectedDateMillis by rememberSaveable { mutableStateOf(sale.sale.createdAtMillis) }
+    var description by rememberSaveable { mutableStateOf(sale.sale.description.orEmpty()) }
+    var showDatePicker by remember { mutableStateOf(false) }
+    val locale = Locale.getDefault()
+    val dateFormatter = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
+    val formattedDate = remember(selectedDateMillis, locale) { dateFormatter.format(Date(selectedDateMillis)) }
+
+    AlertDialog(
+        onDismissRequest = {
+            if (!isSaving) onDismiss()
+        },
+        title = { Text(salesString("sales_edit_dialog_title", "Edit sale")) },
+        text = {
+            Column {
+                Text(salesString("sales_date_label", "Sale date") + ": " + formattedDate)
+                TextButton(onClick = { showDatePicker = true }, enabled = !isSaving) {
+                    Text(salesString("sales_edit_dialog_change_date", "Change date"))
+                }
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text(salesString("field_description", "Description")) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                )
+            }
+        },
+        confirmButton = {
+            FilledTonalButton(
+                onClick = {
+                    if (!isSaving) {
+                        onConfirm(selectedDateMillis, description.trim().takeIf { it.isNotEmpty() })
+                    }
+                },
+                enabled = !isSaving
+            ) {
+                Text(salesString("action_save", "Save"))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss, enabled = !isSaving) {
+                Text(salesString("action_cancel", "Cancel"))
+            }
+        }
+    )
+
+    if (showDatePicker) {
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDateMillis)
+        DatePickerDialog(
+            onDismissRequest = { showDatePicker = false },
+            confirmButton = {
+                TextButton(onClick = {
+                    datePickerState.selectedDateMillis?.let { selectedDateMillis = it }
+                    showDatePicker = false
+                }) {
+                    Text(salesString("action_accept", "Accept"))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDatePicker = false }) {
+                    Text(salesString("action_cancel", "Cancel"))
+                }
+            }
+        ) {
+            DatePicker(state = datePickerState)
         }
     }
 }
@@ -306,11 +455,17 @@ private suspend fun shareSaleReceipt(
     settings: SettingsState,
     currency: NumberFormat
 ) {
+    val logoBitmap = loadStoreLogoBitmap(context, settings.logoUri)
     val bitmap = withContext(Dispatchers.Main) {
         val composeView = ComposeView(context)
         composeView.setContent {
             MaterialTheme {
-                PaymentReceiptShareLayout(details = details, settings = settings, currency = currency)
+                PaymentReceiptShareLayout(
+                    details = details,
+                    settings = settings,
+                    currency = currency,
+                    logoBitmap = logoBitmap
+                )
             }
         }
         val width = context.resources.displayMetrics.widthPixels
@@ -338,15 +493,42 @@ private suspend fun shareSaleReceipt(
             putExtra(Intent.EXTRA_STREAM, uri)
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
-        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.sales_share_title)))
+        runCatching {
+            context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.sales_share_title)))
+        }.onFailure {
+            Toast.makeText(context, R.string.sales_share_error, Toast.LENGTH_LONG).show()
+        }
     }
 }
+
+
+
+private suspend fun loadStoreLogoBitmap(context: Context, logoUri: String?): Bitmap? {
+    val uri = logoUri?.takeIf { it.isNotBlank() }?.let { runCatching { Uri.parse(it) }.getOrNull() }
+        ?: return null
+    return withContext(Dispatchers.IO) {
+        runCatching {
+            val loader = ImageLoader(context)
+            val request = ImageRequest.Builder(context)
+                .data(uri)
+                .allowHardware(false)
+                .build()
+            val result = loader.execute(request)
+            val drawable = (result as? SuccessResult)?.drawable ?: return@withContext null
+            drawable.toBitmap()
+        }.getOrNull()
+    }
+}
+
+
 
 @Composable
 private fun PaymentReceiptShareLayout(
     details: SaleWithDetails,
     settings: SettingsState,
-    currency: NumberFormat
+    currency: NumberFormat,
+    logoBitmap: Bitmap?
+
 ) {
     val locale = Locale.getDefault()
     val dateFormatter = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
@@ -357,6 +539,10 @@ private fun PaymentReceiptShareLayout(
     val totalText = currency.format(details.sale.totalCents / 100.0)
     val paidText = currency.format(details.totalPaidCents / 100.0)
     val outstandingText = currency.format(details.amountDueCents / 100.0)
+    val saleDateText = remember(details.sale.createdAtMillis, locale) {
+        dateFormatter.format(Date(details.sale.createdAtMillis))
+    }
+    val saleDescription = details.sale.description
 
     Column(
         modifier = Modifier
@@ -365,49 +551,81 @@ private fun PaymentReceiptShareLayout(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            settings.logoUri?.let {
-                AsyncImage(
-                    model = it,
+            logoBitmap?.let {
+                Image(
+                    bitmap = it.asImageBitmap(),
                     contentDescription = null,
-                    modifier = Modifier.size(72.dp)
+                    modifier = Modifier.size(72.dp),
+                    contentScale = ContentScale.Crop
                 )
             }
             Text(settings.storeName, style = MaterialTheme.typography.headlineSmall)
-            Text(settings.ownerName, style = MaterialTheme.typography.bodyMedium)
+            settings.ownerName.takeIf { it.isNotBlank() }?.let {
+                Text(it, style = MaterialTheme.typography.bodyMedium)
+            }
         }
 
         Card {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(stringResource(R.string.sales_share_customer_info), style = MaterialTheme.typography.titleSmall)
                 Text(details.customer.name)
-                details.customer.cedula?.let { Text("C.C.: $it") }
-                details.customer.phone?.let { Text(it) }
-                details.customer.address?.let { Text(it) }
+                details.customer.cedula?.takeIf { it.isNotBlank() }?.let { Text("C.C.: $it") }
+                details.customer.phone?.takeIf { it.isNotBlank() }?.let { Text(it) }
+                details.customer.address?.takeIf { it.isNotBlank() }?.let { Text(it) }
+            }
+        }
+        Card {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(salesString("sales_date_label", "Sale date") + ": " + saleDateText)
+                saleDescription?.takeIf { it.isNotBlank() }?.let {
+                    Text(salesString("field_description", "Description") + ": " + it)
+                }
             }
         }
 
         Card {
-            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(stringResource(R.string.sales_share_total_debt) + ": " + totalText)
                 Text(stringResource(R.string.sales_share_total_paid) + ": " + paidText)
                 Text(stringResource(R.string.sales_share_current_debt) + ": " + outstandingText)
             }
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(stringResource(R.string.sales_share_payments_title), style = MaterialTheme.typography.titleSmall)
-            if (details.payments.isEmpty()) {
-                Text(salesString("sales_payments_header", "Payment history") + ": 0")
-            } else {
-                details.payments
-                    .sortedByDescending { it.createdAtMillis }
-                    .forEach { payment ->
-                        val date = Date(payment.createdAtMillis)
-                        val lineDate = "${dateFormatter.format(date)} ${timeFormatter.format(date)}"
-                        val amount = currency.format(payment.amountCents / 100.0)
-                        val description = payment.description?.let { " — $it" } ?: ""
-                        Text("$amount — $lineDate$description")
+        Card {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(stringResource(R.string.sales_share_payments_title), style = MaterialTheme.typography.titleSmall)
+                if (details.payments.isEmpty()) {
+                    Text(stringResource(R.string.sales_share_no_payments))
+                } else {
+                    val totalPayments = details.payments.sumOf { it.amountCents }
+                    val totalPaymentsText = currency.format(totalPayments / 100.0)
+                    Text(
+                        text = stringResource(
+                            R.string.sales_share_payments_total,
+                            totalPaymentsText
+                        ),
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Divider()
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        details.payments
+                            .sortedByDescending { it.createdAtMillis }
+                            .forEach { payment ->
+                                val date = Date(payment.createdAtMillis)
+                                val lineDate =
+                                    "${dateFormatter.format(date)} ${timeFormatter.format(date)}"
+                                val amount = currency.format(payment.amountCents / 100.0)
+                                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                    Text(amount, style = MaterialTheme.typography.bodyMedium)
+                                    Text(lineDate, style = MaterialTheme.typography.bodySmall)
+                                    payment.description?.takeIf { it.isNotBlank() }?.let {
+                                        Text(it, style = MaterialTheme.typography.bodySmall)
+                                    }
+                                }
+                            }
                     }
+                }
             }
         }
 
@@ -437,6 +655,7 @@ fun AddSaleScreen(
     var customerQuery by rememberSaveable { mutableStateOf("") }
     var showProductDialog by remember { mutableStateOf(false) }
     var showCustomerDialog by remember { mutableStateOf(false) }
+    var showSaleDatePicker by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -604,10 +823,29 @@ fun AddSaleScreen(
                     Text(salesString("add_sale_review_hint", "Review the order details before finishing."), modifier = Modifier.padding(top = 4.dp))
                     Spacer(Modifier.height(12.dp))
                     Card(modifier = Modifier.fillMaxWidth()) {
+                        val locale = Locale.getDefault()
+                        val dateFormatter = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
+                        val formattedDate = remember(draft.saleDateMillis, locale) { dateFormatter.format(Date(draft.saleDateMillis)) }
                         Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text(salesString("add_sale_selected_customer", "Selected customer"))
                             Text(draft.customer?.name.orEmpty())
                             draft.customer?.phone?.let { Text(it) }
+                        }
+                    }
+                    Spacer(Modifier.height(12.dp))
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            val formattedDate = null
+                            Text(salesString("sales_date_label", "Sale date") + ": " + formattedDate)
+                            TextButton(onClick = { showSaleDatePicker = true }) {
+                                Text(salesString("sales_edit_dialog_change_date", "Change date"))
+                            }
+                            OutlinedTextField(
+                                value = draft.description,
+                                onValueChange = vm::updateDraftDescription,
+                                label = { Text(salesString("field_description", "Description")) },
+                                modifier = Modifier.fillMaxWidth()
+                            )
                         }
                     }
                     Spacer(Modifier.height(12.dp))
@@ -643,6 +881,28 @@ fun AddSaleScreen(
                             enabled = canFinish && !isSaving
                         ) {
                             Text(salesString("add_sale_confirm", "Confirm sale"))
+                        }
+                    }
+                    if (showSaleDatePicker) {
+                        val datePickerState =
+                            rememberDatePickerState(initialSelectedDateMillis = draft.saleDateMillis)
+                        DatePickerDialog(
+                            onDismissRequest = { showSaleDatePicker = false },
+                            confirmButton = {
+                                TextButton(onClick = {
+                                    datePickerState.selectedDateMillis?.let { vm.updateDraftDate(it) }
+                                    showSaleDatePicker = false
+                                }) {
+                                    Text(salesString("action_accept", "Accept"))
+                                }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showSaleDatePicker = false }) {
+                                    Text(salesString("action_cancel", "Cancel"))
+                                }
+                            }
+                        ) {
+                            DatePicker(state = datePickerState)
                         }
                     }
                 }

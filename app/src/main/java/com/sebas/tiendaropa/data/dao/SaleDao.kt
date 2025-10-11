@@ -30,6 +30,9 @@ interface SaleDao {
     @Delete
     suspend fun deleteSale(entity: SaleEntity)
 
+    @Query("UPDATE sales SET createdAtMillis = :createdAtMillis, description = :description WHERE id = :id")
+    suspend fun updateSaleDetails(id: Long, createdAtMillis: Long, description: String?)
+
     @Transaction
     suspend fun insertSaleWithItems(sale: SaleEntity, items: List<SaleItemEntity>): Long {
         val saleId = insertSale(sale)

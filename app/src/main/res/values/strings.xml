@@ -73,6 +73,9 @@
     <string name="sales_share_total_debt">Total debt</string>
     <string name="sales_share_payments_title">Payments</string>
     <string name="sales_share_generated_on">Generated on %1$s</string>
+    <string name="sales_share_no_payments" translatable="false">No payments recorded yet.</string>
+    <string name="sales_share_payments_total" translatable="false">Total payments received: %1$s</string>
+    <string name="sales_share_error">Unable to share payment history.</string>
 
     <string name="add_sale_title">New sale</string>
     <string name="add_sale_step_products">Select products</string>

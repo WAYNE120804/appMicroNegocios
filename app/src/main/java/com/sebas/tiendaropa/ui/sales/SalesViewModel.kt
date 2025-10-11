@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.sebas.tiendaropa.data.dao.SaleWithDetails
 import com.sebas.tiendaropa.data.db.AppDatabase
 import com.sebas.tiendaropa.data.entity.CategoryEntity
 import com.sebas.tiendaropa.data.entity.CustomerEntity
@@ -17,6 +18,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -33,6 +35,13 @@ class SalesViewModel(
         started = SharingStarted.WhileSubscribed(5_000),
         initialValue = emptyList()
     )
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
+
+    val filteredSales: StateFlow<List<SaleWithDetails>> = combine(sales, _searchQuery) { sales, query ->
+        if (query.isBlank()) sales
+        else sales.filter { it.customer.name.contains(query, ignoreCase = true) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val products = productsRepository.products.stateIn(
         viewModelScope,
@@ -65,6 +74,9 @@ class SalesViewModel(
     val step: StateFlow<AddSaleStep> = _step.asStateFlow()
 
     private val _isSaving = MutableStateFlow(false)
+
+    private val _isUpdatingSale = MutableStateFlow(false)
+    val isUpdatingSale: StateFlow<Boolean> = _isUpdatingSale.asStateFlow()
     val isSaving: StateFlow<Boolean> = _isSaving.asStateFlow()
 
     private val _isSavingPayment = MutableStateFlow(false)
@@ -151,6 +163,17 @@ class SalesViewModel(
         _step.value = AddSaleStep.PRODUCTS
     }
 
+    fun updateDraftDate(millis: Long) {
+        _draft.value = _draft.value.copy(saleDateMillis = millis)
+    }
+
+    fun updateDraftDescription(description: String) {
+        _draft.value = _draft.value.copy(description = description)
+    }
+
+    fun setSearchQuery(query: String) {
+        _searchQuery.value = query
+    }
     fun createProduct(
         name: String,
         description: String?,
@@ -174,7 +197,15 @@ class SalesViewModel(
         )
     }
 
-    fun createCustomer(name: String, address: String?, phone: String?, cedula: String?, description: String?) = viewModelScope.launch {
+
+
+    fun createCustomer(
+        name: String,
+        address: String?,
+        phone: String?,
+        cedula: String?,
+        description: String?
+    ) = viewModelScope.launch {
         if (name.isBlank()) return@launch
         customersRepository.add(
             name = name.trim(),
@@ -213,27 +244,45 @@ class SalesViewModel(
             )
         }
         val total = saleItems.sumOf { it.unitPriceCents * it.quantity }
+        val description = draftSnapshot.description.trim().takeIf { it.isNotEmpty() }
         viewModelScope.launch {
-            _isSaving.value = true
-            try {
-                val saleId = salesRepository.createSale(
-                    customerId = customer.id,
-                    totalCents = total,
-                    items = saleItems
-                )
-                productsRepository.markProductsAsSold(
-                    productIds = saleItems.map { it.productId },
-                    saleId = saleId
-                )
-                onSuccess(saleId)
-                resetDraft()
-            } finally {
-                _isSaving.value = false
+            viewModelScope.launch {
+                _isSaving.value = true
+                try {
+                    val saleId = salesRepository.createSale(
+                        customerId = customer.id,
+                        totalCents = total,
+                        createdAtMillis = draftSnapshot.saleDateMillis,
+                        description = description,
+                        items = saleItems
+                    )
+                    productsRepository.markProductsAsSold(
+                        productIds = saleItems.map { it.productId },
+                        saleId = saleId
+                    )
+                    onSuccess(saleId)
+                    resetDraft()
+                } finally {
+                    _isSaving.value = false
+                }
             }
         }
     }
+        fun updateSaleDetails(saleId: Long, dateMillis: Long, description: String?, onSuccess: () -> Unit = {}) {
+            viewModelScope.launch {
+                _isUpdatingSale.value = true
+                try {
+                    val sanitizedDescription = description?.trim()
+                    salesRepository.updateSale(saleId, dateMillis, sanitizedDescription)
+                    onSuccess()
+                } finally {
+                    _isUpdatingSale.value = false
+                }
+            }
+        }
 
-    private fun pesosToCents(txt: String): Long? {
+
+        fun pesosToCents(txt: String): Long? {
         val digits = txt.filter { it.isDigit() }
         if (digits.isBlank()) return null
         return digits.toLong() * 100L
@@ -256,7 +305,9 @@ class SalesViewModel(
 
 data class SaleDraft(
     val items: List<SaleDraftItem> = emptyList(),
-    val customer: CustomerEntity? = null
+    val customer: CustomerEntity? = null,
+    val saleDateMillis: Long = System.currentTimeMillis(),
+    val description: String = ""
 )
 
 data class SaleDraftItem(
