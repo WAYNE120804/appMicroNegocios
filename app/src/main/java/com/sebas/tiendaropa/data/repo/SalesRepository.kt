@@ -25,12 +25,13 @@ class SalesRepository(private val saleDao: SaleDao) {
         return saleDao.insertSaleWithItems(sale, items)
     }
 
-    suspend fun registerPayment(saleId: Long, amountCents: Long) {
+    suspend fun registerPayment(saleId: Long, amountCents: Long, description: String?) {
         if (amountCents <= 0) return
         val payment = PaymentEntity(
             saleId = saleId,
             amountCents = amountCents,
-            createdAtMillis = System.currentTimeMillis()
+            createdAtMillis = System.currentTimeMillis(),
+            description = description?.ifBlank { null }
         )
         saleDao.insertPayment(payment)
     }

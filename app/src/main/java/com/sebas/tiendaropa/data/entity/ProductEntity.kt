@@ -9,14 +9,16 @@ import androidx.room.PrimaryKey
  * categoryId es OBLIGATORIO (producto siempre pertenece a una categoría).
  */
 @Entity(tableName = "products")
-class ProductEntity(
+data class ProductEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
     val description: String? = null,   // texto libre
     val avisos: String? = null,        // texto libre (notas/alertas)
     val categoryId: Long,              // <-- obligatorio
     val valorCompraCents: Long,
-    val valorVentaCents: Long
+    val valorVentaCents: Long,
+    val soldSaleId: Long? = null,
+    val imageUris: List<String> = emptyList()
 ) {
     fun gananciaCents(): Long = valorVentaCents - valorCompraCents
 }

@@ -9,22 +9,33 @@ class CustomersRepository(private val dao: CustomerDao) {
     fun search(q: String) = dao.search(q)
 
 
-    suspend fun add(name: String, address: String?, phone: String?) =
+    suspend fun add(name: String, address: String?, phone: String?, cedula: String?, description: String?) =
         dao.insert(
             CustomerEntity(
                 name = name.trim(),
                 address = address?.ifBlank { null },
-                phone = phone?.ifBlank { null }
+                phone = phone?.ifBlank { null },
+                cedula = cedula?.ifBlank { null },
+                description = description?.ifBlank { null }
             )
         )
 
-    suspend fun update(id: Long, name: String, address: String?, phone: String?) =
+    suspend fun update(
+        id: Long,
+        name: String,
+        address: String?,
+        phone: String?,
+        cedula: String?,
+        description: String?
+    ) =
         dao.update(
             CustomerEntity(
                 id = id,
                 name = name.trim(),
                 address = address?.ifBlank { null },
-                phone = phone?.ifBlank { null }
+                phone = phone?.ifBlank { null },
+                cedula = cedula?.ifBlank { null },
+                description = description?.ifBlank { null }
             )
         )
 

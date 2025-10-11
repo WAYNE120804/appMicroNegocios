@@ -45,12 +45,19 @@ class CustomersViewModel(private val repo: CustomersRepository) : ViewModel() {
     fun startEdit(c: CustomerEntity) { _editing.value = c }
     fun clearEdit() { _editing.value = null }
 
-    fun saveNew(name: String, address: String?, phone: String?) = viewModelScope.launch {
-        if (name.isNotBlank()) repo.add(name, address, phone)
+    fun saveNew(name: String, address: String?, phone: String?, cedula: String?, description: String?) = viewModelScope.launch {
+        if (name.isNotBlank()) repo.add(name, address, phone, cedula, description)
     }
 
-    fun saveEdit(id: Long, name: String, address: String?, phone: String?) = viewModelScope.launch {
-        if (name.isNotBlank()) repo.update(id, name, address, phone)
+    fun saveEdit(
+        id: Long,
+        name: String,
+        address: String?,
+        phone: String?,
+        cedula: String?,
+        description: String?
+    ) = viewModelScope.launch {
+        if (name.isNotBlank()) repo.update(id, name, address, phone, cedula, description)
     }
 
     fun remove(c: CustomerEntity) = viewModelScope.launch { repo.remove(c) }

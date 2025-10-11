@@ -40,6 +40,12 @@ class SalesViewModel(
         emptyList()
     )
 
+    val availableProducts = productsRepository.availableProducts.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000),
+        emptyList()
+    )
+
     val customers = customersRepository.customers.stateIn(
         viewModelScope,
         SharingStarted.WhileSubscribed(5_000),
@@ -151,7 +157,8 @@ class SalesViewModel(
         avisos: String?,
         categoryId: Long,
         valorCompraPesos: String,
-        valorVentaPesos: String
+        valorVentaPesos: String,
+        imageUris: List<String> = emptyList()
     ) = viewModelScope.launch {
         val compra = pesosToCents(valorCompraPesos)
         val venta = pesosToCents(valorVentaPesos)
@@ -162,26 +169,29 @@ class SalesViewModel(
             avisos = avisos?.trim()?.takeIf { it.isNotBlank() },
             categoryId = categoryId,
             compraCents = compra,
-            ventaCents = venta
+            ventaCents = venta,
+            imageUris = imageUris
         )
     }
 
-    fun createCustomer(name: String, address: String?, phone: String?) = viewModelScope.launch {
+    fun createCustomer(name: String, address: String?, phone: String?, cedula: String?, description: String?) = viewModelScope.launch {
         if (name.isBlank()) return@launch
         customersRepository.add(
             name = name.trim(),
             address = address?.trim()?.takeIf { it.isNotBlank() },
-            phone = phone?.trim()?.takeIf { it.isNotBlank() }
+            phone = phone?.trim()?.takeIf { it.isNotBlank() },
+            cedula = cedula?.trim()?.takeIf { it.isNotBlank() },
+            description = description?.trim()?.takeIf { it.isNotBlank() }
         )
     }
 
-    fun addPayment(saleId: Long, amountPesos: String, onSuccess: () -> Unit = {}) {
+    fun addPayment(saleId: Long, amountPesos: String, description: String?, onSuccess: () -> Unit = {}) {
         val amountCents = pesosToCents(amountPesos)
         if (amountCents == null || amountCents <= 0) return
         viewModelScope.launch {
             _isSavingPayment.value = true
             try {
-                salesRepository.registerPayment(saleId, amountCents)
+                salesRepository.registerPayment(saleId, amountCents, description?.takeIf { it.isNotBlank() })
                 onSuccess()
             } finally {
                 _isSavingPayment.value = false
@@ -210,6 +220,10 @@ class SalesViewModel(
                     customerId = customer.id,
                     totalCents = total,
                     items = saleItems
+                )
+                productsRepository.markProductsAsSold(
+                    productIds = saleItems.map { it.productId },
+                    saleId = saleId
                 )
                 onSuccess(saleId)
                 resetDraft()

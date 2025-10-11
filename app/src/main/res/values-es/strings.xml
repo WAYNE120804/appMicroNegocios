@@ -33,6 +33,19 @@
     <string name="products_unknown_category">Categoría no asignada</string>
     <string name="products_empty_categories">Agrega una categoría primero</string>
     <string name="products_need_category_hint">Necesitas al menos una categoría para crear productos.</string>
+    <string name="products_filter_all">Todos</string>
+    <string name="products_filter_available">Disponibles</string>
+    <string name="products_filter_sold">Vendidos</string>
+    <string name="products_status_sold">Vendido</string>
+    <string name="products_status_available">Disponible</string>
+    <string name="view">Ver</string>
+    <string name="products_add_photo_gallery">Galería</string>
+    <string name="products_add_photo_camera">Cámara</string>
+    <string name="products_max_photos">Máximo 3 fotos por producto.</string>
+    <string name="products_camera_error">No se pudo abrir la cámara.</string>
+    <string name="products_detail_title">Detalles del producto</string>
+    <string name="action_close">Cerrar</string>
+    <string name="products_no_photos">Sin fotos registradas.</string>
 
     <!-- Ventas -->
     <string name="sales_title">Ventas</string>
@@ -47,6 +60,15 @@
     <string name="sales_payments_header">Historial de abonos</string>
     <string name="sales_paid_in_full">Venta pagada completamente</string>
     <string name="field_quantity">Cantidad</string>
+    <string name="sales_share_button">Compartir historial</string>
+    <string name="sales_share_title">Compartir historial de abonos</string>
+    <string name="sales_share_customer_info">Datos del cliente</string>
+    <string name="sales_share_sale_total">Total de la venta</string>
+    <string name="sales_share_total_paid">Abonos realizados</string>
+    <string name="sales_share_current_debt">Deuda actual</string>
+    <string name="sales_share_total_debt">Deuda total</string>
+    <string name="sales_share_payments_title">Abonos</string>
+    <string name="sales_share_generated_on">Generado el %1$s</string>
 
     <string name="add_sale_title">Nueva venta</string>
     <string name="add_sale_step_products">Escoge los productos</string>
