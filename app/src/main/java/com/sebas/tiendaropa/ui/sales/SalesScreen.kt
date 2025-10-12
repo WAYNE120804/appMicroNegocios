@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -35,6 +37,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -237,14 +240,16 @@ private fun SaleRow(
     }
     val canAddPayment = details.amountDueCents > 0
     val locale = Locale.getDefault()
-    val dateFormatter = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
-    val saleDate = remember(details.sale.createdAtMillis) { Date(details.sale.createdAtMillis) }
+    val dateFormatter = remember(locale) { saleDateFormatter(locale) }
+    val saleDateText = remember(details.sale.createdAtMillis, locale) {
+        formatSaleDate(details.sale.createdAtMillis, dateFormatter)
+    }
 
     ListItem(
         headlineContent = { Text(details.customer.name) },
         supportingContent = {
             Column {
-                Text(salesString("sales_date_label", "Sale date") + ": " + dateFormatter.format(saleDate))
+                Text(salesString("sales_date_label", "Sale date") + ": " + saleDateText)
                 Text(salesString("sales_products_label", "Products") + ": " + productSummary)
                 Text(salesString("sales_total_label", "Sale total") + ": " + total)
                 Text(salesString("sales_paid_label", "Payments") + ": " + paid)
@@ -320,8 +325,10 @@ private fun EditSaleDialog(
     var description by rememberSaveable { mutableStateOf(sale.sale.description.orEmpty()) }
     var showDatePicker by remember { mutableStateOf(false) }
     val locale = Locale.getDefault()
-    val dateFormatter = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
-    val formattedDate = remember(selectedDateMillis, locale) { dateFormatter.format(Date(selectedDateMillis)) }
+    val dateFormatter = remember(locale) { saleDateFormatter(locale) }
+    val formattedDate = remember(selectedDateMillis, locale) {
+        formatSaleDate(selectedDateMillis, dateFormatter)
+    }
 
     AlertDialog(
         onDismissRequest = {
@@ -364,12 +371,20 @@ private fun EditSaleDialog(
     )
 
     if (showDatePicker) {
-        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = selectedDateMillis)
+        val utcInitialDate = remember(selectedDateMillis) {
+            localStartOfDayMillisToUtcMillis(selectedDateMillis)
+        }
+        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = utcInitialDate)
+        LaunchedEffect(utcInitialDate) {
+            datePickerState.selectedDateMillis = utcInitialDate
+        }
         DatePickerDialog(
             onDismissRequest = { showDatePicker = false },
             confirmButton = {
                 TextButton(onClick = {
-                    datePickerState.selectedDateMillis?.let { selectedDateMillis = it }
+                    datePickerState.selectedDateMillis?.let {
+                        selectedDateMillis = utcMillisToLocalStartOfDayMillis(it)
+                    }
                     showDatePicker = false
                 }) {
                     Text(salesString("action_accept", "Accept"))
@@ -819,52 +834,67 @@ fun AddSaleScreen(
                 }
 
                 AddSaleStep.REVIEW -> {
-                    Text(salesString("add_sale_step_review", "Review and confirm"))
-                    Text(salesString("add_sale_review_hint", "Review the order details before finishing."), modifier = Modifier.padding(top = 4.dp))
-                    Spacer(Modifier.height(12.dp))
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        val locale = Locale.getDefault()
-                        val dateFormatter = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
-                        val formattedDate = remember(draft.saleDateMillis, locale) { dateFormatter.format(Date(draft.saleDateMillis)) }
-                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(salesString("add_sale_selected_customer", "Selected customer"))
-                            Text(draft.customer?.name.orEmpty())
-                            draft.customer?.phone?.let { Text(it) }
-                        }
+                    val locale = Locale.getDefault()
+                    val dateFormatter = remember(locale) { saleDateFormatter(locale) }
+                    val formattedDate = remember(draft.saleDateMillis, locale) {
+                        formatSaleDate(draft.saleDateMillis, dateFormatter)
                     }
-                    Spacer(Modifier.height(12.dp))
-                    Card(modifier = Modifier.fillMaxWidth()) {
-                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            val formattedDate = null
-                            Text(salesString("sales_date_label", "Sale date") + ": " + formattedDate)
-                            TextButton(onClick = { showSaleDatePicker = true }) {
-                                Text(salesString("sales_edit_dialog_change_date", "Change date"))
+                    val scrollState = rememberScrollState()
+
+                    Column(
+                        modifier = Modifier
+                            .weight(1f, fill = true)
+                            .verticalScroll(scrollState)
+                    ) {
+                        Text(salesString("add_sale_step_review", "Review and confirm"))
+                        Text(
+                            salesString(
+                                "add_sale_review_hint",
+                                "Review the order details before finishing."
+                            ),
+                            modifier = Modifier.padding(top = 4.dp)
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(salesString("add_sale_selected_customer", "Selected customer"))
+                                Text(draft.customer?.name.orEmpty())
+                                draft.customer?.phone?.let { Text(it) }
                             }
-                            OutlinedTextField(
-                                value = draft.description,
-                                onValueChange = vm::updateDraftDescription,
-                                label = { Text(salesString("field_description", "Description")) },
-                                modifier = Modifier.fillMaxWidth()
-                            )
                         }
+                        Spacer(Modifier.height(12.dp))
+                        Card(modifier = Modifier.fillMaxWidth()) {
+                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                Text(salesString("sales_date_label", "Sale date") + ": " + formattedDate)
+                                TextButton(onClick = { showSaleDatePicker = true }) {
+                                    Text(salesString("sales_edit_dialog_change_date", "Change date"))
+                                }
+                                OutlinedTextField(
+                                    value = draft.description,
+                                    onValueChange = vm::updateDraftDescription,
+                                    label = { Text(salesString("field_description", "Description")) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(12.dp))
+                        SelectedProductsList(
+                            items = draft.items,
+                            currency = currency,
+                            onIncrease = { vm.addProduct(it.product) },
+                            onDecrease = { vm.updateQuantity(it.product.id, it.quantity - 1) },
+                            onRemove = { vm.removeProduct(it.product.id) },
+                            readOnly = true
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Text(
+                            salesString("add_sale_total", "Total") + ": " + currency.format(totalCents / 100.0)
+                        )
+                        Text(
+                            salesString("add_sale_outstanding", "Outstanding") + ": " + currency.format(totalCents / 100.0)
+                        )
                     }
                     Spacer(Modifier.height(12.dp))
-                    SelectedProductsList(
-                        items = draft.items,
-                        currency = currency,
-                        onIncrease = { vm.addProduct(it.product) },
-                        onDecrease = { vm.updateQuantity(it.product.id, it.quantity - 1) },
-                        onRemove = { vm.removeProduct(it.product.id) },
-                        readOnly = true
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Text(
-                        salesString("add_sale_total", "Total") + ": " + currency.format(totalCents / 100.0)
-                    )
-                    Text(
-                        salesString("add_sale_outstanding", "Outstanding") + ": " + currency.format(totalCents / 100.0)
-                    )
-                    Spacer(Modifier.weight(1f, fill = true))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -872,7 +902,7 @@ fun AddSaleScreen(
                         OutlinedButton(onClick = { vm.back() }, enabled = !isSaving) {
                             Text(salesString("action_back", "Back"))
                         }
-                        FilledTonalButton(
+                        Button(
                             onClick = {
                                 vm.confirmSale {
                                     onFinished()
@@ -880,12 +910,17 @@ fun AddSaleScreen(
                             },
                             enabled = canFinish && !isSaving
                         ) {
-                            Text(salesString("add_sale_confirm", "Confirm sale"))
+                            Text(salesString("add_sale_save", "Save sale"))
                         }
                     }
                     if (showSaleDatePicker) {
-                        val datePickerState =
-                            rememberDatePickerState(initialSelectedDateMillis = draft.saleDateMillis)
+                        val utcInitialDate = remember(draft.saleDateMillis) {
+                            localStartOfDayMillisToUtcMillis(draft.saleDateMillis)
+                        }
+                        val datePickerState = rememberDatePickerState(initialSelectedDateMillis = utcInitialDate)
+                        LaunchedEffect(utcInitialDate) {
+                            datePickerState.selectedDateMillis = utcInitialDate
+                        }
                         DatePickerDialog(
                             onDismissRequest = { showSaleDatePicker = false },
                             confirmButton = {
@@ -1229,7 +1264,7 @@ private fun salesString(name: String, fallback: String, vararg formatArgs: Any?)
     val context = LocalContext.current
     val resId = remember(name) { context.resources.getIdentifier(name, "string", context.packageName) }
     return if (resId != 0) {
-        if (formatArgs.isNotEmpty()) stringResource(resId, *arrayOf(formatArgs)) else stringResource(resId)
+        if (formatArgs.isNotEmpty()) stringResource(resId, *formatArgs) else stringResource(resId)
     } else {
         if (formatArgs.isNotEmpty()) String.format(Locale.getDefault(), fallback, *formatArgs) else fallback
     }
