@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
@@ -66,6 +67,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
@@ -77,6 +79,7 @@ import com.sebas.tiendaropa.data.entity.ExpenseCategoryEntity
 import com.sebas.tiendaropa.data.entity.ExpenseEntity
 import com.sebas.tiendaropa.ui.common.currencyFormatter
 import com.sebas.tiendaropa.ui.common.formatPesosFromCents
+import com.sebas.tiendaropa.ui.common.formatPesosInput
 import com.sebas.tiendaropa.ui.common.integerFormatter
 import com.sebas.tiendaropa.ui.common.parsePesosToCents
 import com.sebas.tiendaropa.ui.sales.currentLocalDateStartMillis
@@ -433,6 +436,19 @@ private fun ExpenseFormDialog(
                     onValueChange = { concept = it },
                     label = { Text(stringResource(R.string.expenses_field_concept)) },
                     modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = amountText,
+                    onValueChange = { amountText = formatPesosInput(it, pesosFormatter) },
+                    label = { Text(stringResource(R.string.expenses_field_amount)) },
+                    modifier = Modifier.fillMaxWidth(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    isError = amountText.isNotBlank() && (amountCents == null || amountCents <= 0),
+                    supportingText = {
+                        if (amountText.isNotBlank() && (amountCents == null || amountCents <= 0)) {
+                            Text(stringResource(R.string.expenses_field_amount_error))
+                        }
+                    }
                 )
                 Text(
                     text = stringResource(

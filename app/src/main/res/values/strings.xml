@@ -171,6 +171,7 @@
     <string name="expenses_add_photo_camera">Take photo</string>
     <string name="expenses_remove_photo">Remove photo</string>
     <string name="expenses_photo_preview_hint">Tap the image to see it larger</string>
+    <string name="expenses_field_amount_error">Enter an amount greater than zero.</string>
     <string name="expenses_dialog_new_title">New expense</string>
     <string name="expenses_dialog_edit_title">Edit expense</string>
     <string name="expenses_camera_permission_denied">Camera permission is required to take photos.</string>
