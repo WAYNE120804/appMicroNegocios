@@ -304,9 +304,7 @@ private fun QuickActionsRow(
 private fun QuickActionButton(text: String, onClick: () -> Unit) {
     Button(
         onClick = onClick,
-        modifier = Modifier
-            .weight(1f, fill = false)
-            .widthIn(min = 180.dp),
+        modifier = Modifier.widthIn(min = 180.dp),
     ) {
         Text(text, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
@@ -392,9 +390,7 @@ private fun DashboardSections(
         if (current.totalDebt <= 0.0) stringResource(R.string.home_empty_debt) else null
     }
 
-    val cardModifier = Modifier
-        .weight(1f, fill = false)
-        .widthIn(min = 220.dp)
+    val cardModifier = Modifier.widthIn(min = 220.dp)
 
     FlowRow(
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -617,6 +613,9 @@ private fun TrendCard(
                 if (maxValue <= 0.0) {
                     Text(stringResource(R.string.home_trend_empty), style = MaterialTheme.typography.bodyMedium)
                 } else {
+                    val scheme = MaterialTheme.colorScheme
+                    val salesColor = scheme.primary
+                    val expensesColor = scheme.tertiary
                     Canvas(modifier = Modifier.fillMaxSize()) {
                         val stepX = if (points.size > 1) size.width / (points.size - 1) else 0f
                         val scale = if (maxValue == 0.0) 0f else size.height / maxValue.toFloat()
@@ -636,12 +635,12 @@ private fun TrendCard(
                         }
                         drawPath(
                             path = expensesPath,
-                            color = MaterialTheme.colorScheme.tertiary,
+                            color = expensesColor,
                             style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round),
                         )
                         drawPath(
                             path = salesPath,
-                            color = MaterialTheme.colorScheme.primary,
+                            color = salesColor,
                             style = Stroke(width = 4.dp.toPx(), cap = StrokeCap.Round),
                         )
                     }
