@@ -79,6 +79,25 @@ fun SettingsScreen(
         }
     }
 
+    var pinNotice by remember { mutableStateOf<String?>(null) }
+    var biometricNotice by remember { mutableStateOf<String?>(null) }
+    var pinSetupRequested by rememberSaveable { mutableStateOf(false) }
+
+    LaunchedEffect(state.pinHash) {
+        if (state.pinHash != null) {
+            pinNotice = null
+            biometricNotice = null
+            pinSetupRequested = false
+        }
+    }
+
+    LaunchedEffect(state.pinEnabled) {
+        if (!state.pinEnabled) {
+            pinNotice = null
+            pinSetupRequested = false
+        }
+    }
+
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -112,14 +131,58 @@ fun SettingsScreen(
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("PIN activado")
-            Switch(checked = state.pinEnabled, onCheckedChange = onSetPinEnabled)
+            Switch(
+                checked = state.pinEnabled || pinSetupRequested,
+                onCheckedChange = { enabled ->
+                    pinNotice = null
+                    biometricNotice = null
+                    if (enabled) {
+                        if (state.pinHash == null) {
+                            pinSetupRequested = true
+                            pinNotice = "Configura tu PIN de 4 dígitos para activarlo."
+                        } else {
+                            onSetPinEnabled(true)
+                        }
+                    } else {
+                        onSetBiometricEnabled(false)
+                        onSetPinEnabled(false)
+                        pinNotice = "PIN desactivado. Se eliminó el PIN configurado."
+                        pinSetupRequested = false
+                    }
+                }
+            )
         }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text("Biometría activada")
-            Switch(checked = state.biometricEnabled, onCheckedChange = onSetBiometricEnabled)
+        pinNotice?.let {
+            Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
         }
 
-        if (state.pinEnabled) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            Text("Biometría activada")
+            Switch(
+                checked = state.biometricEnabled,
+                onCheckedChange = { enabled ->
+                    biometricNotice = null
+                    if (enabled) {
+                        if (state.pinHash != null && state.pinEnabled) {
+                            onSetBiometricEnabled(true)
+                        } else {
+                            if (!state.pinEnabled) {
+                                pinSetupRequested = true
+                                pinNotice = "Configura tu PIN de 4 dígitos para activar la biometría."
+                            }
+                            biometricNotice = "Configura un PIN de 4 dígitos antes de activar la biometría."
+                        }
+                    } else {
+                        onSetBiometricEnabled(false)
+                    }
+                }
+            )
+        }
+        biometricNotice?.let {
+            Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+        }
+
+        if (state.pinEnabled || pinSetupRequested) {
             Divider()
 
             var pinOne by rememberSaveable { mutableStateOf("") }
@@ -160,6 +223,8 @@ fun SettingsScreen(
             Button(
                 onClick = {
                     pinSuccess = null
+                    pinNotice = null
+                    biometricNotice = null
                     when {
                         pinOne.isBlank() || pinTwo.isBlank() ->
                             pinError = "Ingresa y confirma tu PIN"
@@ -169,6 +234,8 @@ fun SettingsScreen(
                             pinError = "El PIN debe tener exactamente 4 números"
                         else -> {
                             onSavePin(pinOne)
+                            onSetPinEnabled(true)
+                            pinSetupRequested = false
                             pinError = null
                             pinSuccess = "PIN actualizado correctamente"
                             pinOne = ""
