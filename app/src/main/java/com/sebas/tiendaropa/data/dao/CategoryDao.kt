@@ -14,6 +14,9 @@ interface CategoryDao {
     @Query("SELECT * FROM categories ORDER BY name ASC")
     fun observeAll(): Flow<List<CategoryEntity>>
 
+    @Query("SELECT * FROM categories ORDER BY name ASC")
+    suspend fun getAllSnapshot(): List<CategoryEntity>
+
     @Query("""
         SELECT * FROM categories
         WHERE name LIKE '%' || :q || '%'

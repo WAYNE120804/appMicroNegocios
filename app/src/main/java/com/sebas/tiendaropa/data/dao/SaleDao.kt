@@ -51,6 +51,12 @@ interface SaleDao {
 
     @Query("SELECT COALESCE(SUM(amountCents), 0) FROM payments WHERE saleId = :saleId")
     suspend fun totalPaymentsForSale(saleId: Long): Long
+
+    @Query("SELECT * FROM payments ORDER BY createdAtMillis DESC")
+    suspend fun getAllPayments(): List<PaymentEntity>
+
+    @Query("SELECT * FROM sales WHERE id IN (:ids)")
+    suspend fun getSalesByIds(ids: List<Long>): List<SaleEntity>
 }
 
 data class SaleWithDetails(
