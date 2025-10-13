@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Category
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Menu
@@ -54,6 +55,10 @@ import com.sebas.tiendaropa.ui.categories.CategoriesViewModel
 import com.sebas.tiendaropa.ui.customers.CustomersScreen
 import com.sebas.tiendaropa.ui.customers.CustomersViewModel
 import com.sebas.tiendaropa.ui.home.HomeScreen
+import com.sebas.tiendaropa.ui.expenses.ExpenseCategoriesScreen
+import com.sebas.tiendaropa.ui.expenses.ExpenseCategoriesViewModel
+import com.sebas.tiendaropa.ui.expenses.ExpensesScreen
+import com.sebas.tiendaropa.ui.expenses.ExpensesViewModel
 import com.sebas.tiendaropa.ui.products.ProductsScreen
 import com.sebas.tiendaropa.ui.products.ProductsViewModel
 import com.sebas.tiendaropa.ui.sales.AddSaleScreen
@@ -84,6 +89,14 @@ class MainActivity : ComponentActivity() {
         SalesViewModel.factory(applicationContext)
     }
 
+    private val expensesVm: ExpensesViewModel by viewModels {
+        ExpensesViewModel.factory(applicationContext)
+    }
+
+    private val expenseCategoriesVm: ExpenseCategoriesViewModel by viewModels {
+        ExpenseCategoriesViewModel.factory(applicationContext)
+    }
+
 
     @SuppressLint("ComposableDestinationInComposeScope")
     @OptIn(ExperimentalMaterial3Api::class)
@@ -106,6 +119,7 @@ class MainActivity : ComponentActivity() {
                     DrawerItem(Routes.Customers, "Clientes", Icons.Default.People),
                     DrawerItem(Routes.Products, "Productos", Icons.Default.ShoppingCart),
                     DrawerItem(Routes.Sales, "Ventas", Icons.Default.ReceiptLong),
+                    DrawerItem(Routes.Expenses, "Gastos", Icons.Default.AttachMoney),
                     DrawerItem(Routes.Categories, "Categorías", Icons.Default.Category),
                     DrawerItem(Routes.Settings, "Configuración", Icons.Default.Settings),
                 )
@@ -113,6 +127,7 @@ class MainActivity : ComponentActivity() {
                 val settingsState = settingsVm.state.collectAsState().value
                 val totalCompras = productsVm.totalCompras.collectAsState().value
                 val totalGanancia = productsVm.totalGanancia.collectAsState().value
+                val totalGastos = expensesVm.totalAmountCents.collectAsState().value
 
                 ModalNavigationDrawer(
                     drawerState = drawerState,
@@ -177,7 +192,7 @@ class MainActivity : ComponentActivity() {
                             composable(Routes.Home) {
                                 HomeScreen(
                                     settings = settingsState,
-                                    totalExpenses = 0.0,
+                                    totalExpenses = totalGastos / 100.0,
                                     totalPurchases = totalCompras / 100.0,
                                     totalProfit = totalGanancia / 100.0,
                                     onAddSale = { nav.navigate(Routes.AddSale) },
@@ -212,6 +227,12 @@ class MainActivity : ComponentActivity() {
                                 )
 
                             }
+                            composable(Routes.Expenses) {
+                                ExpensesScreen(
+                                    vm = expensesVm,
+                                    onManageCategories = { nav.navigate(Routes.ExpenseCategories) }
+                                )
+                            }
                             composable(Routes.Settings) {
                                 SettingsScreen(
                                     state = settingsState,
@@ -237,7 +258,9 @@ class MainActivity : ComponentActivity() {
                                     navController = nav
                                 )
                             }
-                                composable(Routes.Expenses) { CenterText("Gastos — En construcción") }
+                            composable(Routes.ExpenseCategories) {
+                                ExpenseCategoriesScreen(expenseCategoriesVm)
+                            }
                         }
                     }
                 }
@@ -256,17 +279,8 @@ class MainActivity : ComponentActivity() {
         const val AddPayment = "addPayment"
         const val Expenses = "expenses"
 
+        const val ExpenseCategories = "expenseCategories"
         const val Sales = "sales"
-
-
-    }
-
-    @Composable
-    private fun CenterText(txt: String) {
-        androidx.compose.foundation.layout.Box(
-            modifier = Modifier.fillMaxSize(),
-            contentAlignment = androidx.compose.ui.Alignment.Center
-        ) { Text(txt) }
     }
 
     // Helper para navegación sin duplicar destinos
