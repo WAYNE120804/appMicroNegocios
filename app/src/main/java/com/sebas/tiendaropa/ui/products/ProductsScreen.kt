@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -33,6 +34,7 @@ import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -43,10 +45,10 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -106,6 +108,7 @@ fun ProductsScreen(vm: ProductsViewModel,  startWithCreateDialog: Boolean = fals
     val focusManager = LocalFocusManager.current
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceVariant,
         topBar = {
             Column {
                 TopAppBar(title = { Text(stringResource(R.string.products_title)) })
@@ -119,7 +122,14 @@ fun ProductsScreen(vm: ProductsViewModel,  startWithCreateDialog: Boolean = fals
                         .padding(horizontal = 12.dp, vertical = 8.dp),
                     singleLine = true,
                     label = { Text(stringResource(R.string.products_search_label)) },
-                    placeholder = { Text(stringResource(R.string.products_search_placeholder)) }
+                    placeholder = { Text(stringResource(R.string.products_search_placeholder)) },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedContainerColor = MaterialTheme.colorScheme.surface,
+                        unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                        disabledContainerColor = MaterialTheme.colorScheme.surface,
+                        focusedBorderColor = MaterialTheme.colorScheme.outline,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    )
                 )
             }
         },
@@ -133,9 +143,7 @@ fun ProductsScreen(vm: ProductsViewModel,  startWithCreateDialog: Boolean = fals
         Column(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxWidth()
                 .fillMaxSize()
-                .padding(bottom = 16.dp)
         ) {
             Row(
                 modifier = Modifier
@@ -159,53 +167,27 @@ fun ProductsScreen(vm: ProductsViewModel,  startWithCreateDialog: Boolean = fals
                     label = { Text(stringResource(R.string.products_filter_sold)) }
                 )
             }
-            LazyColumn(modifier = Modifier.weight(1f, fill = true)) {
+            LazyColumn(
+                modifier = Modifier
+                    .weight(1f, fill = true),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(vertical = 12.dp)
+            ) {
                 items(
                     items = products,
                     key = { it.id }
                 ) { product ->
                     val categoryName = categories.firstOrNull { it.id == product.categoryId }?.name
                         ?: stringResource(R.string.products_unknown_category)
-                    ListItem(
-                        headlineContent = { Text(product.name) },
-                        leadingContent = {
-                            product.imageUris.firstOrNull()?.let { uri ->
-                                AsyncImage(
-                                    model = uri,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(56.dp)
-                                )
-                            }
-                        },
-                        supportingContent = {
-                            ProductSupportingInfo(product = product, categoryName = categoryName)
-                        },
-                        trailingContent = {
-                            Column(horizontalAlignment = Alignment.End) {
-                                Row {
-                                    TextButton(onClick = { viewing = product }) {
-                                        Icon(Icons.Default.Visibility, contentDescription = null)
-                                        Spacer(Modifier.size(4.dp))
-                                        Text(stringResource(R.string.view))
-                                    }
-                                }
-                                Row {
-                                    TextButton(onClick = { openEdit(product) }) {
-                                        Text(stringResource(R.string.edit))
-                                    }
-                                    TextButton(onClick = { vm.remove(product) }) {
-                                        Text(stringResource(R.string.delete))
-                                    }
-                                }
-                            }
-                        },
-                        modifier = Modifier
-                            .clickable { openEdit(product) }
-                            .padding(horizontal = 8.dp)
+                    ProductCard(
+                        product = product,
+                        categoryName = categoryName,
+                        onView = { viewing = product },
+                        onEdit = { openEdit(product) },
+                        onDelete = { vm.remove(product) }
                     )
-                    Divider()
                 }
+                item { Spacer(modifier = Modifier.size(8.dp)) }
             }
         }
     }
@@ -245,7 +227,7 @@ private fun ProductSupportingInfo(product: ProductEntity, categoryName: String) 
     val venta = formatter.format(product.valorVentaCents / 100.0)
     val ganancia = formatter.format(product.gananciaCents() / 100.0)
 
-    Column(Modifier.padding(top = 4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         AssistChip(
             onClick = {},
             enabled = false,
@@ -258,18 +240,105 @@ private fun ProductSupportingInfo(product: ProductEntity, categoryName: String) 
                 )
             }
         )
-        Spacer(modifier = Modifier.padding(top = 4.dp))
-        Text(stringResource(R.string.field_category) + ": " + categoryName)
+        Text(
+            text = stringResource(R.string.field_category) + ": " + categoryName,
+            style = MaterialTheme.typography.bodyMedium
+        )
         product.description?.takeIf { it.isNotBlank() }?.let {
-            Text(it)
+            Text(it, style = MaterialTheme.typography.bodyMedium)
         }
         product.avisos?.takeIf { it.isNotBlank() }?.let {
-            Text(stringResource(R.string.field_avisos) + ": " + it)
+            Text(
+                stringResource(R.string.field_avisos) + ": " + it,
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
-        Spacer(modifier = Modifier.padding(top = 4.dp))
-        Text(stringResource(R.string.field_purchase_price) + ": " + compra)
-        Text(stringResource(R.string.field_sale_price) + ": " + venta)
-        Text(stringResource(R.string.field_profit) + ": " + ganancia)
+        Text(
+            stringResource(R.string.field_purchase_price) + ": " + compra,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            stringResource(R.string.field_sale_price) + ": " + venta,
+            style = MaterialTheme.typography.bodyMedium
+        )
+        Text(
+            stringResource(R.string.field_profit) + ": " + ganancia,
+            style = MaterialTheme.typography.bodyMedium
+        )
+    }
+}
+
+@Composable
+private fun ProductCard(
+    product: ProductEntity,
+    categoryName: String,
+    onView: () -> Unit,
+    onEdit: () -> Unit,
+    onDelete: () -> Unit
+) {
+    val formatter = remember { currencyFormatter() }
+    val salePrice = remember(product.valorVentaCents) {
+        formatter.format(product.valorVentaCents / 100.0)
+    }
+
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = product.name,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = salePrice,
+                    style = MaterialTheme.typography.titleMedium
+                )
+            }
+            product.imageUris.firstOrNull()?.let { uri ->
+                AsyncImage(
+                    model = uri,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 160.dp),
+                    contentScale = ContentScale.Crop
+                )
+            }
+            ProductSupportingInfo(product = product, categoryName = categoryName)
+            Divider()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
+                TextButton(onClick = onView) {
+                    Icon(Icons.Default.Visibility, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.view))
+                }
+                TextButton(onClick = onEdit) {
+                    Text(stringResource(R.string.edit))
+                }
+                TextButton(onClick = onDelete) {
+                    Icon(Icons.Default.Delete, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
+                    Text(stringResource(R.string.delete))
+                }
+            }
+        }
     }
 }
 

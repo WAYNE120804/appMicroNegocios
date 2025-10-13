@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.Divider
@@ -50,6 +52,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -134,6 +137,7 @@ fun SalesScreen(
     val settings by settingsRepo.state.collectAsState(initial = SettingsState())
 
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.surfaceVariant,
         topBar = {
             TopAppBar(title = { Text(salesString("sales_title", "Sales")) })
         },
@@ -151,9 +155,18 @@ fun SalesScreen(
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = vm::setSearchQuery,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 label = { Text(salesString("sales_search_customer_label", "Search customer")) },
-                placeholder = { Text(salesString("sales_search_customer_placeholder", "Customer name")) }
+                placeholder = { Text(salesString("sales_search_customer_placeholder", "Customer name")) },
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    disabledContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedBorderColor = MaterialTheme.colorScheme.outline,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                )
             )
             Spacer(modifier = Modifier.height(12.dp))
             when {
@@ -187,13 +200,15 @@ fun SalesScreen(
                     LazyColumn(
                         modifier = Modifier
                             .weight(1f, fill = true)
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                        contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
                         items(
                             items = sales,
                             key = { it.sale.id }
                         ) { sale ->
-                            SaleRow(
+                            SaleCard(
                                 details = sale,
                                 currency = currency,
                                 onAddPayment = { paymentTarget = it },
@@ -204,8 +219,8 @@ fun SalesScreen(
                                 },
                                 onEdit = { editTarget = it }
                             )
-                            Divider()
                         }
+                        item { Spacer(modifier = Modifier.height(8.dp)) }
                     }
                 }
             }
@@ -243,7 +258,7 @@ fun SalesScreen(
 
 
 @Composable
-private fun SaleRow(
+private fun SaleCard(
     details: SaleWithDetails,
     currency: NumberFormat,
     onAddPayment: (SaleWithDetails) -> Unit,
@@ -264,11 +279,38 @@ private fun SaleRow(
         formatSaleDate(details.sale.createdAtMillis, dateFormatter)
     }
 
-    ListItem(
-        headlineContent = { Text(details.customer.name) },
-        supportingContent = {
-            Column {
-                Text(salesString("sales_date_label", "Sale date") + ": " + saleDateText)
+    Card(
+        modifier = Modifier
+            .padding(horizontal = 16.dp)
+            .fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = details.customer.name,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Text(
+                        text = salesString("sales_date_label", "Sale date") + ": " + saleDateText,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+                IconButton(onClick = { onShare(details) }) {
+                    Icon(Icons.Default.ReceiptLong, contentDescription = null)
+                }
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(salesString("sales_products_label", "Products") + ": " + productSummary)
                 Text(salesString("sales_total_label", "Sale total") + ": " + total)
                 Text(salesString("sales_paid_label", "Payments") + ": " + paid)
@@ -279,27 +321,27 @@ private fun SaleRow(
                 if (!canAddPayment) {
                     Text(
                         text = salesString("sales_paid_in_full", "Paid in full"),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(top = 4.dp)
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 PaymentHistory(payments = details.payments, currency = currency)
             }
-        },
-        trailingContent = {
-            Column(horizontalAlignment = Alignment.End) {
-                TextButton(onClick = { onShare(details) }) {
-                    Text(salesString("sales_share_button", "Share history"))
-                }
+            Divider()
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.End
+            ) {
                 TextButton(onClick = { onEdit(details) }) {
                     Text(salesString("action_edit", "Edit"))
                 }
                 TextButton(onClick = { onAddPayment(details) }, enabled = canAddPayment) {
+                    Icon(Icons.Default.Add, contentDescription = null)
+                    Spacer(Modifier.width(4.dp))
                     Text(salesString("sales_add_payment", "Record payment"))
                 }
             }
         }
-    )
+    }
 }
 
 @Composable
