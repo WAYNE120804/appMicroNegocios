@@ -101,6 +101,10 @@
     <string name="action_edit">Edit</string>
     <string name="sales_date_label">Sale date</string>
     <string name="sales_edit_dialog_change_date">Change date</string>
+    <string name="sales_edit_payments_header">Payments</string>
+    <string name="sales_edit_payments_hint">Update the existing payments if you need to correct them.</string>
+    <string name="sales_edit_payment_amount_label">Payment %1$d amount</string>
+    <string name="sales_edit_payment_description_label">Payment %1$d description</string>
 
     <!-- Payments -->
     <string name="sales_payment_dialog_title">Record payment</string>

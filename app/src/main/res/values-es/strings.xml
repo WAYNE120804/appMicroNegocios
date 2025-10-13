@@ -94,6 +94,10 @@
     <string name="action_edit">Editar</string>
     <string name="sales_date_label">Fecha de la venta</string>
     <string name="sales_edit_dialog_change_date">Cambiar fecha</string>
+    <string name="sales_edit_payments_header">Abonos</string>
+    <string name="sales_edit_payments_hint">Actualiza los abonos registrados si necesitas corregirlos.</string>
+    <string name="sales_edit_payment_amount_label">Valor del abono %1$d</string>
+    <string name="sales_edit_payment_description_label">Descripción del abono %1$d</string>
 
     <!-- Abonos -->
     <string name="sales_payment_dialog_title">Registrar abono</string>
