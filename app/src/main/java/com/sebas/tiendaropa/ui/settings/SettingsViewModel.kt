@@ -23,10 +23,22 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     fun setPinEnabled(v: Boolean) = viewModelScope.launch {
         repo.setPinEnabled(v)
         if (!v) {
+            repo.setBiometricEnabled(false)
             repo.clearPinHash()
         }
     }
-    fun setBiometricEnabled(v: Boolean) = viewModelScope.launch { repo.setBiometricEnabled(v) }
+    fun setBiometricEnabled(v: Boolean) = viewModelScope.launch {
+        if (v) {
+            val current = state.value
+            if (current.pinHash != null) {
+                repo.setBiometricEnabled(true)
+            } else {
+                repo.setBiometricEnabled(false)
+            }
+        } else {
+            repo.setBiometricEnabled(false)
+        }
+    }
 
     fun savePin(pin: String) = viewModelScope.launch {
         repo.setPinHash(SecurityUtils.sha256(pin))

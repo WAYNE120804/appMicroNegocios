@@ -17,7 +17,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenu
+
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
@@ -37,7 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.menuAnchor
+
 import coil.compose.AsyncImage
 import com.sebas.tiendaropa.data.prefs.SettingsState
 import com.sebas.tiendaropa.util.SecurityUtils
@@ -79,6 +79,23 @@ fun SettingsScreen(
         }
     }
 
+    var pinNotice by remember { mutableStateOf<String?>(null) }
+    var biometricNotice by remember { mutableStateOf<String?>(null) }
+
+    LaunchedEffect(state.pinHash) {
+        if (state.pinHash != null) {
+            pinNotice = null
+            biometricNotice = null
+        }
+    }
+
+    LaunchedEffect(state.pinEnabled) {
+        if (!state.pinEnabled) {
+            pinNotice = null
+        }
+    }
+
+
     Column(
         modifier = Modifier.fillMaxSize().padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -112,11 +129,51 @@ fun SettingsScreen(
 
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("PIN activado")
-            Switch(checked = state.pinEnabled, onCheckedChange = onSetPinEnabled)
+            Switch(
+                checked = state.pinEnabled,
+                onCheckedChange = { enabled ->
+                    pinNotice = null
+                    biometricNotice = null
+                    if (enabled) {
+                        onSetPinEnabled(true)
+                        if (state.pinHash == null) {
+                            pinNotice = "Configura tu PIN de 4 dígitos para activarlo."
+                        }
+                    } else {
+                        onSetBiometricEnabled(false)
+                        onSetPinEnabled(false)
+                        pinNotice = "PIN desactivado. Se eliminó el PIN configurado."
+                    }
+                }
+            )
         }
+        pinNotice?.let {
+            Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
+        }
+
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text("Biometría activada")
-            Switch(checked = state.biometricEnabled, onCheckedChange = onSetBiometricEnabled)
+            Switch(
+                checked = state.biometricEnabled,
+                onCheckedChange = { enabled ->
+                    biometricNotice = null
+                    if (enabled) {
+                        if (state.pinHash != null && state.pinEnabled) {
+                            onSetBiometricEnabled(true)
+                        } else {
+                            if (!state.pinEnabled) {
+                                onSetPinEnabled(true)
+                            }
+                            biometricNotice = "Configura un PIN de 4 dígitos antes de activar la biometría."
+                        }
+                    } else {
+                        onSetBiometricEnabled(false)
+                    }
+                }
+            )
+        }
+        biometricNotice?.let {
+            Text(it, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodySmall)
         }
 
         if (state.pinEnabled) {
@@ -160,6 +217,8 @@ fun SettingsScreen(
             Button(
                 onClick = {
                     pinSuccess = null
+                    pinNotice = null
+                    biometricNotice = null
                     when {
                         pinOne.isBlank() || pinTwo.isBlank() ->
                             pinError = "Ingresa y confirma tu PIN"
