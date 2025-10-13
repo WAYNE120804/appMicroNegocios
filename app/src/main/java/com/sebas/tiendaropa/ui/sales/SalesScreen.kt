@@ -204,6 +204,7 @@ fun SalesScreen(
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                         contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
+                        item { Spacer(modifier = Modifier.height(4.dp)) }
                         items(
                             items = sales,
                             key = { it.sale.id }
