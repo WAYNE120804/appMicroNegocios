@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Image
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
+import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,11 +61,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
@@ -78,7 +81,6 @@ import com.sebas.tiendaropa.ui.common.integerFormatter
 import com.sebas.tiendaropa.ui.common.parsePesosToCents
 import java.io.File
 import java.io.IOException
-
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -294,6 +296,8 @@ private fun ProductDialog(
     val context = LocalContext.current
     val imageUris = remember { mutableStateListOf<String>() }
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
+    var expandedImageUri by remember { mutableStateOf<String?>(null) }
+
 
     LaunchedEffect(initial?.id) {
         imageUris.clear()
@@ -483,7 +487,9 @@ private fun ProductDialog(
                                 AsyncImage(
                                     model = uri,
                                     contentDescription = null,
-                                    modifier = Modifier.size(84.dp)
+                                    modifier = Modifier
+                                        .size(84.dp)
+                                        .clickable { expandedImageUri = uri }
                                 )
                                 IconButton(onClick = { imageUris.remove(uri) }) {
                                     Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete))
@@ -583,6 +589,21 @@ private fun ProductDialog(
                         },
                         enabled = canSave
             ) { Text(stringResource(R.string.action_save)) }
+            expandedImageUri?.let { uri ->
+                Dialog(onDismissRequest = { expandedImageUri = null }) {
+                    Card(shape = MaterialTheme.shapes.large) {
+                        AsyncImage(
+                            model = uri,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 240.dp, max = 420.dp)
+                                .padding(8.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
+                }
+            }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
@@ -625,6 +646,7 @@ private fun ProductDetailDialog(
     val total = formatter.format(product.valorVentaCents / 100.0)
     val purchase = formatter.format(product.valorCompraCents / 100.0)
     val profit = formatter.format(product.gananciaCents() / 100.0)
+    var expandedImageUri by remember { mutableStateOf<String?>(null) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -661,12 +683,29 @@ private fun ProductDetailDialog(
                             AsyncImage(
                                 model = uri,
                                 contentDescription = null,
-                                modifier = Modifier.size(120.dp)
+                                modifier = Modifier
+                                    .size(120.dp)
+                                    .clickable { expandedImageUri = uri }
                             )
                         }
                     }
                 } else {
                     Text(stringResource(R.string.products_no_photos))
+                }
+            }
+            expandedImageUri?.let { uri ->
+                Dialog(onDismissRequest = { expandedImageUri = null }) {
+                    Card(shape = MaterialTheme.shapes.large) {
+                        AsyncImage(
+                            model = uri,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .heightIn(min = 240.dp, max = 480.dp)
+                                .padding(8.dp),
+                            contentScale = ContentScale.Fit
+                        )
+                    }
                 }
             }
         },

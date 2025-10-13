@@ -130,6 +130,7 @@
     <string name="expenses_remove_photo">Quitar foto</string>
     <string name="expenses_dialog_new_title">Nuevo gasto</string>
     <string name="expenses_dialog_edit_title">Editar gasto</string>
+    <string name="expenses_photo_preview_hint">Toca la imagen para verla más grande</string>
     <string name="expenses_camera_permission_denied">Se requiere permiso de cámara para tomar fotos.</string>
     <string name="expenses_camera_error">No se pudo abrir la cámara. Inténtalo de nuevo.</string>
 
