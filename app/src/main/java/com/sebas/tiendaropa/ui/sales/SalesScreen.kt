@@ -13,6 +13,7 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,7 +24,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -108,6 +108,7 @@ import java.text.DateFormat
 import java.text.NumberFormat
 import java.util.Date
 import java.util.Locale
+
 
 private fun Context.findActivity(): Activity? {
     var ctx = this
@@ -307,9 +308,6 @@ private fun SaleCard(
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
-                IconButton(onClick = { onShare(details) }) {
-                    Icon(Icons.Default.ReceiptLong, contentDescription = null)
-                }
             }
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(salesString("sales_products_label", "Products") + ": " + productSummary)
@@ -329,12 +327,22 @@ private fun SaleCard(
             }
             Divider()
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.End,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+            TextButton(onClick = { onShare(details) }) {
+                Icon(
+                    Icons.Default.ReceiptLong,
+                    contentDescription = salesString("sales_share_button", "Share payments")
+                )
+                Spacer(Modifier.width(4.dp))
+                Text(salesString("sales_share_button", "Share payments"))
+            }
+            Spacer(Modifier.width(8.dp))
                 TextButton(onClick = { onEdit(details) }) {
                     Text(salesString("action_edit", "Edit"))
                 }
+                Spacer(Modifier.width(8.dp))
                 TextButton(onClick = { onAddPayment(details) }, enabled = canAddPayment) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(Modifier.width(4.dp))
@@ -1552,7 +1560,9 @@ private fun PaymentReceiptShareLayout(
                 enabled = categories.isNotEmpty(),
                 label = { Text(salesString("field_category", "Category")) },
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                modifier = Modifier.menuAnchor().fillMaxWidth()
+                modifier = Modifier
+                    .menuAnchor()
+                    .fillMaxWidth()
             )
             ExposedDropdownMenu(
                 expanded = expanded,
