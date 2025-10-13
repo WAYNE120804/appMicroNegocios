@@ -135,10 +135,14 @@
     <string name="expenses_field_date_value">Date: %1$s</string>
     <string name="expenses_change_date">Change date</string>
     <string name="expenses_field_payment_method">Payment method</string>
+    <string name="expenses_manage_categories">View expense categories</string>
     <string name="expenses_add_photo">Add photo</string>
+    <string name="expenses_add_photo_camera">Take photo</string>
     <string name="expenses_remove_photo">Remove photo</string>
     <string name="expenses_dialog_new_title">New expense</string>
     <string name="expenses_dialog_edit_title">Edit expense</string>
+    <string name="expenses_camera_permission_denied">Camera permission is required to take photos.</string>
+    <string name="expenses_camera_error">Unable to open the camera. Please try again.</string>
 
     <!-- Expense categories -->
     <string name="expense_categories_title">Expense categories</string>
