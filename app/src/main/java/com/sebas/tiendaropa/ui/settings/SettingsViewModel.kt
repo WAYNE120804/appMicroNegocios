@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
+import com.sebas.tiendaropa.data.prefs.DashboardPeriodType
 import com.sebas.tiendaropa.data.prefs.SettingsRepository
 import com.sebas.tiendaropa.data.prefs.SettingsState
 import com.sebas.tiendaropa.util.SecurityUtils
@@ -60,6 +61,14 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     }
 
     fun clearSecurityAnswer() = viewModelScope.launch { repo.clearSecurityAnswer() }
+
+    fun setDashboardPeriod(
+        period: DashboardPeriodType,
+        customStartMillis: Long?,
+        customEndMillis: Long?,
+    ) = viewModelScope.launch {
+        repo.setDashboardPeriod(period, customStartMillis, customEndMillis)
+    }
 
     companion object {
         fun factory(context: Context): ViewModelProvider.Factory =

@@ -6,6 +6,8 @@ import androidx.datastore.preferences.core.edit
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
+enum class DashboardPeriodType { TODAY, LAST_7_DAYS, THIS_MONTH, CUSTOM }
+
 data class SettingsState(
     val storeName: String = "CloudStore",
     val ownerName: String = "Usuario",
@@ -14,7 +16,10 @@ data class SettingsState(
     val biometricEnabled: Boolean = false,
     val pinHash: String? = null,
     val securityQuestion: String? = null,
-    val securityAnswerHash: String? = null
+    val securityAnswerHash: String? = null,
+    val dashboardPeriod: DashboardPeriodType = DashboardPeriodType.LAST_7_DAYS,
+    val dashboardCustomStartMillis: Long? = null,
+    val dashboardCustomEndMillis: Long? = null,
 )
 
 class SettingsRepository(private val context: Context) {
@@ -28,7 +33,17 @@ class SettingsRepository(private val context: Context) {
             biometricEnabled = p[StorePrefsKeys.BIOMETRIC_ENABLED] ?: false,
             pinHash = p[StorePrefsKeys.PIN_HASH],
             securityQuestion = p[StorePrefsKeys.SECURITY_Q],
-            securityAnswerHash = p[StorePrefsKeys.SECURITY_A_HASH]
+            securityAnswerHash = p[StorePrefsKeys.SECURITY_A_HASH],
+            dashboardPeriod =
+                p[StorePrefsKeys.HOME_DASHBOARD_PERIOD]
+                    ?.let { stored ->
+                        runCatching { DashboardPeriodType.valueOf(stored) }.getOrNull()
+                    }
+                    ?: DashboardPeriodType.LAST_7_DAYS,
+            dashboardCustomStartMillis =
+                p[StorePrefsKeys.HOME_DASHBOARD_CUSTOM_START],
+            dashboardCustomEndMillis =
+                p[StorePrefsKeys.HOME_DASHBOARD_CUSTOM_END],
         )
     }
 
@@ -54,5 +69,23 @@ class SettingsRepository(private val context: Context) {
     }
     suspend fun clearSecurityAnswer() = context.dataStore.edit {
         it.remove(StorePrefsKeys.SECURITY_A_HASH)
+    }
+
+    suspend fun setDashboardPeriod(
+        period: DashboardPeriodType,
+        customStartMillis: Long?,
+        customEndMillis: Long?,
+    ) = context.dataStore.edit { prefs ->
+        prefs[StorePrefsKeys.HOME_DASHBOARD_PERIOD] = period.name
+        if (customStartMillis != null) {
+            prefs[StorePrefsKeys.HOME_DASHBOARD_CUSTOM_START] = customStartMillis
+        } else {
+            prefs.remove(StorePrefsKeys.HOME_DASHBOARD_CUSTOM_START)
+        }
+        if (customEndMillis != null) {
+            prefs[StorePrefsKeys.HOME_DASHBOARD_CUSTOM_END] = customEndMillis
+        } else {
+            prefs.remove(StorePrefsKeys.HOME_DASHBOARD_CUSTOM_END)
+        }
     }
 }
