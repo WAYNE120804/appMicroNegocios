@@ -2,12 +2,11 @@ package com.sebas.tiendaropa
 
 import android.annotation.SuppressLint
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -35,8 +34,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,12 +65,14 @@ import com.sebas.tiendaropa.ui.products.ProductsViewModel
 import com.sebas.tiendaropa.ui.sales.AddSaleScreen
 import com.sebas.tiendaropa.ui.sales.SalesScreen
 import com.sebas.tiendaropa.ui.sales.SalesViewModel
+import com.sebas.tiendaropa.ui.security.AuthenticationScreen
 import com.sebas.tiendaropa.ui.settings.SettingsScreen
 import com.sebas.tiendaropa.ui.settings.SettingsViewModel
+import androidx.fragment.app.FragmentActivity
 import kotlinx.coroutines.launch
 
 
-class MainActivity : ComponentActivity() {
+class MainActivity : FragmentActivity() {
 
     private val customersVm: CustomersViewModel by viewModels {
         CustomersViewModel.factory(applicationContext)
@@ -104,162 +107,180 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                val nav = rememberNavController()
-                val currentRoute = nav.currentBackStackEntryAsState().value?.destination?.route
-
-                // Drawer state
-                val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-                val scope = rememberCoroutineScope()
-
-                //Ítems del menú
-                data class DrawerItem(val route: String, val label: String, val icon: ImageVector)
-
-                val items = listOf(
-                    DrawerItem(Routes.Home, "Inicio", Icons.Default.Home),
-                    DrawerItem(Routes.Customers, "Clientes", Icons.Default.People),
-                    DrawerItem(Routes.Products, "Productos", Icons.Default.ShoppingCart),
-                    DrawerItem(Routes.Sales, "Ventas", Icons.Default.ReceiptLong),
-                    DrawerItem(Routes.Expenses, "Gastos", Icons.Default.AttachMoney),
-                    DrawerItem(Routes.Categories, "Categorías", Icons.Default.Category),
-                    DrawerItem(Routes.Settings, "Configuración", Icons.Default.Settings),
-                )
-
                 val settingsState = settingsVm.state.collectAsState().value
-                val totalCompras = productsVm.totalCompras.collectAsState().value
-                val totalGanancia = productsVm.totalGanancia.collectAsState().value
-                val totalGastos = expensesVm.totalAmountCents.collectAsState().value
+                var isUnlocked by rememberSaveable { mutableStateOf(false) }
+                val needsSecurity = settingsState.pinEnabled || settingsState.biometricEnabled
 
-                ModalNavigationDrawer(
-                    drawerState = drawerState,
-                    drawerContent = {
-                        ModalDrawerSheet {
-                            Text(
-                                text = settingsState.storeName,
-                                style = MaterialTheme.typography.titleLarge,
-                                modifier = Modifier.padding(16.dp)
-                            )
-                            items.forEach { item ->
-                                NavigationDrawerItem(
-                                    label = { Text(item.label) },
-                                    selected = currentRoute == item.route,
-                                    onClick = {
-                                        nav.navigate(item.route) {
-                                            popUpTo(nav.graph.findStartDestination().id) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
-                                        scope.launch { drawerState.close() }
-                                    },
-                                    icon = { Icon(item.icon, contentDescription = item.label) },
-                                    modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
-                                )
-                            }
+                LaunchedEffect(needsSecurity) {
+                    isUnlocked = !needsSecurity
+                }
+
+                if (needsSecurity && !isUnlocked) {
+                    AuthenticationScreen(
+                        state = settingsState,
+                        onUnlock = { isUnlocked = true },
+                        onResetPin = {
+                            settingsVm.savePin(it)
+                            settingsVm.setPinEnabled(true)
                         }
-                    }
-                ) {
-                    Scaffold(
-                        topBar = {
-                            TopAppBar(
-                                title = {
-                                    Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(settingsState.storeName)
-                                        Spacer(Modifier.width(12.dp))
-                                        // Logo (un poco más grande)
-                                        settingsState.logoUri?.let {
-                                            AsyncImage(
-                                                model = it,
-                                                contentDescription = "Logo",
-                                                modifier = Modifier.size(40.dp).clip(CircleShape)
-                                            )
-                                        }
-                                    }
-                                },
-                                navigationIcon = {
-                                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
-                                        Icon(Icons.Default.Menu, contentDescription = "Menú")
-                                    }
+                    )
+                } else {
+                    val nav = rememberNavController()
+                    val currentRoute = nav.currentBackStackEntryAsState().value?.destination?.route
+
+                    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+                    val scope = rememberCoroutineScope()
+
+                    data class DrawerItem(val route: String, val label: String, val icon: ImageVector)
+
+                    val items = listOf(
+                        DrawerItem(Routes.Home, "Inicio", Icons.Default.Home),
+                        DrawerItem(Routes.Customers, "Clientes", Icons.Default.People),
+                        DrawerItem(Routes.Products, "Productos", Icons.Default.ShoppingCart),
+                        DrawerItem(Routes.Sales, "Ventas", Icons.Default.ReceiptLong),
+                        DrawerItem(Routes.Expenses, "Gastos", Icons.Default.AttachMoney),
+                        DrawerItem(Routes.Categories, "Categorías", Icons.Default.Category),
+                        DrawerItem(Routes.Settings, "Configuración", Icons.Default.Settings),
+                    )
+
+                    val totalCompras = productsVm.totalCompras.collectAsState().value
+                    val totalGanancia = productsVm.totalGanancia.collectAsState().value
+                    val totalGastos = expensesVm.totalAmountCents.collectAsState().value
+
+                    ModalNavigationDrawer(
+                        drawerState = drawerState,
+                        drawerContent = {
+                            ModalDrawerSheet {
+                                Text(
+                                    text = settingsState.storeName,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    modifier = Modifier.padding(16.dp)
+                                )
+                                items.forEach { item ->
+                                    NavigationDrawerItem(
+                                        label = { Text(item.label) },
+                                        selected = currentRoute == item.route,
+                                        onClick = {
+                                            nav.navigate(item.route) {
+                                                popUpTo(nav.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                            scope.launch { drawerState.close() }
+                                        },
+                                        icon = { Icon(item.icon, contentDescription = item.label) },
+                                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding)
+                                    )
                                 }
-                            )
+                            }
                         }
-                    ) { inner ->
-                        NavHost(
-                            navController = nav,
-                            startDestination = Routes.Home,
-                            modifier = Modifier.padding(inner)
-                        ) {
-                            composable(Routes.Home) {
-                                HomeScreen(
-                                    settings = settingsState,
-                                    totalExpenses = totalGastos / 100.0,
-                                    totalPurchases = totalCompras / 100.0,
-                                    totalProfit = totalGanancia / 100.0,
-                                    onAddSale = { nav.navigate(Routes.AddSale) },
-                                    onAddPayment = { nav.navigate(Routes.Sales) },
-                                    onAddClient = { nav.navigate(Routes.Customers) },
-                                    onAddExpense = { nav.navigate(Routes.Expenses) }
-                                )
-                            }
-                            composable(Routes.Customers) { CustomersScreen(customersVm) }
-                            composable(Routes.Categories) { CategoriesScreen(categoriesVm) }
-                            composable(
-                                route = Routes.Products + "?create={create}",
-                                arguments = listOf(
-                                    navArgument("create") {
-                                        type = NavType.BoolType
-                                        defaultValue = false
-                                    }
-                                )
-                            ) { backStackEntry ->
-                                val startWithCreateDialog =
-                                    backStackEntry.arguments?.getBoolean("create") ?: false
-
-                                ProductsScreen(
-                                    vm = productsVm,
-                                    startWithCreateDialog = startWithCreateDialog
-                                )
-                            }
-                            composable(Routes.Sales) {
-                                SalesScreen(
-                                    vm = salesVm,
-                                    onAddSale = { nav.navigate(Routes.AddSale) }
-                                )
-
-                            }
-                            composable(Routes.Expenses) {
-                                ExpensesScreen(
-                                    vm = expensesVm,
-                                    onManageCategories = { nav.navigate(Routes.ExpenseCategories) }
-                                )
-                            }
-                            composable(Routes.Settings) {
-                                SettingsScreen(
-                                    state = settingsState,
-                                    onSetStoreName = settingsVm::setStoreName,
-                                    onSetOwnerName = settingsVm::setOwnerName,
-                                    onSetLogoUri = settingsVm::setLogoUri,
-                                    onSetPinEnabled = settingsVm::setPinEnabled,
-                                    onSetBiometricEnabled = settingsVm::setBiometricEnabled
-                                )
-                            }
-                            composable(Routes.AddSale) {
-                                AddSaleScreen(
-                                    vm = salesVm,
-                                    onFinished = {
-                                        nav.navigate(Routes.Sales) {
-                                            popUpTo(nav.graph.findStartDestination().id) {
-                                                saveState = true
+                    ) {
+                        Scaffold(
+                            topBar = {
+                                TopAppBar(
+                                    title = {
+                                        Row(verticalAlignment = Alignment.CenterVertically) {
+                                            Text(settingsState.storeName)
+                                            Spacer(Modifier.width(12.dp))
+                                            settingsState.logoUri?.let {
+                                                AsyncImage(
+                                                    model = it,
+                                                    contentDescription = "Logo",
+                                                    modifier = Modifier.size(40.dp).clip(CircleShape)
+                                                )
                                             }
-                                            launchSingleTop = true
-                                            restoreState = true
                                         }
                                     },
-                                    navController = nav
+                                    navigationIcon = {
+                                        IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                            Icon(Icons.Default.Menu, contentDescription = "Menú")
+                                        }
+                                    }
                                 )
                             }
-                            composable(Routes.ExpenseCategories) {
-                                ExpenseCategoriesScreen(expenseCategoriesVm)
+                        ) { inner ->
+                            NavHost(
+                                navController = nav,
+                                startDestination = Routes.Home,
+                                modifier = Modifier.padding(inner)
+                            ) {
+                                composable(Routes.Home) {
+                                    HomeScreen(
+                                        settings = settingsState,
+                                        totalExpenses = totalGastos / 100.0,
+                                        totalPurchases = totalCompras / 100.0,
+                                        totalProfit = totalGanancia / 100.0,
+                                        onAddSale = { nav.navigate(Routes.AddSale) },
+                                        onAddPayment = { nav.navigate(Routes.Sales) },
+                                        onAddClient = { nav.navigate(Routes.Customers) },
+                                        onAddExpense = { nav.navigate(Routes.Expenses) }
+                                    )
+                                }
+                                composable(Routes.Customers) { CustomersScreen(customersVm) }
+                                composable(Routes.Categories) { CategoriesScreen(categoriesVm) }
+                                composable(
+                                    route = Routes.Products + "?create={create}",
+                                    arguments = listOf(
+                                        navArgument("create") {
+                                            type = NavType.BoolType
+                                            defaultValue = false
+                                        }
+                                    )
+                                ) { backStackEntry ->
+                                    val startWithCreateDialog =
+                                        backStackEntry.arguments?.getBoolean("create") ?: false
+
+                                    ProductsScreen(
+                                        vm = productsVm,
+                                        startWithCreateDialog = startWithCreateDialog
+                                    )
+                                }
+                                composable(Routes.Sales) {
+                                    SalesScreen(
+                                        vm = salesVm,
+                                        onAddSale = { nav.navigate(Routes.AddSale) }
+                                    )
+
+                                }
+                                composable(Routes.Expenses) {
+                                    ExpensesScreen(
+                                        vm = expensesVm,
+                                        onManageCategories = { nav.navigate(Routes.ExpenseCategories) }
+                                    )
+                                }
+                                composable(Routes.Settings) {
+                                    SettingsScreen(
+                                        state = settingsState,
+                                        onSetStoreName = settingsVm::setStoreName,
+                                        onSetOwnerName = settingsVm::setOwnerName,
+                                        onSetLogoUri = settingsVm::setLogoUri,
+                                        onSetPinEnabled = settingsVm::setPinEnabled,
+                                        onSetBiometricEnabled = settingsVm::setBiometricEnabled,
+                                        onSavePin = settingsVm::savePin,
+                                        onSetSecurityQuestion = settingsVm::setSecurityQuestion,
+                                        onSaveSecurityAnswer = settingsVm::saveSecurityAnswer
+                                    )
+                                }
+                                composable(Routes.AddSale) {
+                                    AddSaleScreen(
+                                        vm = salesVm,
+                                        onFinished = {
+                                            nav.navigate(Routes.Sales) {
+                                                popUpTo(nav.graph.findStartDestination().id) {
+                                                    saveState = true
+                                                }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        },
+                                        navController = nav
+                                    )
+                                }
+                                composable(Routes.ExpenseCategories) {
+                                    ExpenseCategoriesScreen(expenseCategoriesVm)
+                                }
                             }
                         }
                     }

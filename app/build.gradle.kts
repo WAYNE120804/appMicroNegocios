@@ -91,6 +91,10 @@ dependencies {
     // DataStore Preferences
     implementation("androidx.datastore:datastore-preferences:1.1.1")
 
+    // Seguridad biométrica y soporte de FragmentActivity
+    implementation("androidx.biometric:biometric:1.1.0")
+    implementation("androidx.fragment:fragment-ktx:1.8.3")
+
 // Cargar imagen del logo (URI) en Compose
     implementation("io.coil-kt:coil-compose:2.6.0")
 
