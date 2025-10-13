@@ -122,4 +122,28 @@
         <item quantity="one">%d customer</item>
         <item quantity="other">%d customers</item>
     </plurals>
+
+    <!-- Expenses -->
+    <string name="expenses_title">Expenses</string>
+    <string name="expenses_search_label">Expense</string>
+    <string name="expenses_search_placeholder">Search by concept, description or method</string>
+    <string name="expenses_summary_title">Total expenses</string>
+    <string name="expenses_no_category">Uncategorized</string>
+    <string name="expenses_payment_method_label">Payment method: %1$s</string>
+    <string name="expenses_field_concept">Concept</string>
+    <string name="expenses_field_amount">Amount</string>
+    <string name="expenses_field_date_value">Date: %1$s</string>
+    <string name="expenses_change_date">Change date</string>
+    <string name="expenses_field_payment_method">Payment method</string>
+    <string name="expenses_add_photo">Add photo</string>
+    <string name="expenses_remove_photo">Remove photo</string>
+    <string name="expenses_dialog_new_title">New expense</string>
+    <string name="expenses_dialog_edit_title">Edit expense</string>
+
+    <!-- Expense categories -->
+    <string name="expense_categories_title">Expense categories</string>
+    <string name="expense_categories_search_label">Category</string>
+    <string name="expense_categories_search_placeholder">Search categories</string>
+    <string name="expense_categories_new_title">New expense category</string>
+    <string name="expense_categories_edit_title">Edit expense category</string>
 </resources>
