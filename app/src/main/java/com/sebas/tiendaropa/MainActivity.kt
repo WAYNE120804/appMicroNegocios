@@ -42,10 +42,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import coil.compose.AsyncImage
 import com.sebas.tiendaropa.ui.categories.CategoriesScreen
 import com.sebas.tiendaropa.ui.categories.CategoriesViewModel
@@ -186,7 +188,23 @@ class MainActivity : ComponentActivity() {
                             }
                             composable(Routes.Customers) { CustomersScreen(customersVm) }
                             composable(Routes.Categories) { CategoriesScreen(categoriesVm) }
-                            composable(Routes.Products) { ProductsScreen(productsVm) }
+                            composable(
+                                route = Routes.Products + "?create={create}",
+                                arguments = listOf(
+                                    navArgument("create") {
+                                        type = NavType.BoolType
+                                        defaultValue = false
+                                    }
+                                )
+                            ) { backStackEntry ->
+                                val startWithCreateDialog =
+                                    backStackEntry.arguments?.getBoolean("create") ?: false
+
+                                ProductsScreen(
+                                    vm = productsVm,
+                                    startWithCreateDialog = startWithCreateDialog
+                                )
+                            }
                             composable(Routes.Sales) {
                                 SalesScreen(
                                     vm = salesVm,
@@ -215,7 +233,8 @@ class MainActivity : ComponentActivity() {
                                             launchSingleTop = true
                                             restoreState = true
                                         }
-                                    }
+                                    },
+                                    navController = nav
                                 )
                             }
                                 composable(Routes.Expenses) { CenterText("Gastos — En construcción") }

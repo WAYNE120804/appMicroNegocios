@@ -1,30 +1,54 @@
 package com.sebas.tiendaropa.ui.sales
 
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.ZoneOffset
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
+import java.text.DateFormat
+import java.util.Calendar
+import java.util.Date
 import java.util.Locale
+import java.util.TimeZone
 
-internal fun currentLocalDateStartMillis(): Long =
-    LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+/**
+ * Utilidades de fecha para la sección de ventas (compatibles con minSdk 24).
+ *
+ * Nota: evitamos java.time (API 26+) y usamos Calendar/Date/DateFormat.
+ */
 
+/** Millis del inicio del día local (00:00:00.000) del día actual. */
+internal fun currentLocalDateStartMillis(): Long {
+    val cal = Calendar.getInstance()
+    cal.set(Calendar.HOUR_OF_DAY, 0)
+    cal.set(Calendar.MINUTE, 0)
+    cal.set(Calendar.SECOND, 0)
+    cal.set(Calendar.MILLISECOND, 0)
+    return cal.timeInMillis
+}
+
+/**
+ * Convierte un instante UTC (por ejemplo, devuelto por DatePicker) a
+ * el inicio del día en hora local (00:00:00.000) en millis.
+ */
 internal fun utcMillisToLocalStartOfDayMillis(utcMillis: Long): Long {
-    val utcDate = Instant.ofEpochMilli(utcMillis).atZone(ZoneOffset.UTC).toLocalDate()
-    return utcDate.atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
+    val cal = Calendar.getInstance() // zona horaria local por defecto
+    cal.timeInMillis = utcMillis
+    cal.set(Calendar.HOUR_OF_DAY, 0)
+    cal.set(Calendar.MINUTE, 0)
+    cal.set(Calendar.SECOND, 0)
+    cal.set(Calendar.MILLISECOND, 0)
+    return cal.timeInMillis
 }
 
-internal fun localStartOfDayMillisToUtcMillis(localMillis: Long): Long {
-    val localDate = Instant.ofEpochMilli(localMillis).atZone(ZoneId.systemDefault()).toLocalDate()
-    return localDate.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
+/**
+ * Convierte el inicio del día local (millis) a un aproximado en UTC (millis),
+ * útil para inicializar DatePicker que espera UTC.
+ */
+internal fun localStartOfDayMillisToUtcMillis(localStartMillis: Long): Long {
+    val tz: TimeZone = TimeZone.getDefault()
+    return localStartMillis - tz.getOffset(localStartMillis)
 }
 
-internal fun saleDateFormatter(locale: Locale): DateTimeFormatter =
-    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
+/** Devuelve un formateador de fecha estilo MEDIUM para el locale dado. */
+internal fun saleDateFormatter(locale: Locale): DateFormat =
+    DateFormat.getDateInstance(DateFormat.MEDIUM, locale)
 
-internal fun formatSaleDate(millis: Long, formatter: DateTimeFormatter): String {
-    val localDate = Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()).toLocalDate()
-    return formatter.format(localDate)
-}
+/** Formatea un instante en millis usando el DateFormat dado. */
+internal fun formatSaleDate(millis: Long, formatter: DateFormat): String =
+    formatter.format(Date(millis))

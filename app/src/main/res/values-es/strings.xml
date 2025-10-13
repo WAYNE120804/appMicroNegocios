@@ -46,7 +46,7 @@
     <string name="products_detail_title">Detalles del producto</string>
     <string name="action_close">Cerrar</string>
     <string name="products_no_photos">Sin fotos registradas.</string>
-
+    <string name="products_camera_permission_denied" >permisos de camara es requerido</string>
     <!-- Ventas -->
     <string name="sales_title">Ventas</string>
     <string name="action_add_sale">Agregar venta</string>
@@ -90,6 +90,10 @@
     <string name="action_select">Seleccionar</string>
     <string name="add_sale_review_hint">Revisa los datos antes de finalizar.</string>
     <string name="action_add">Agregar</string>
+    <string name="add_sale_save">Guardar venta</string>
+    <string name="action_edit">Editar</string>
+    <string name="sales_date_label">Fecha de la venta</string>
+    <string name="sales_edit_dialog_change_date">Cambiar fecha</string>
 
     <!-- Abonos -->
     <string name="sales_payment_dialog_title">Registrar abono</string>
@@ -97,6 +101,7 @@
     <string name="sales_payment_dialog_amount_label">Valor del abono</string>
     <string name="sales_payment_dialog_hint">Ingresa cuánto pagó el cliente.</string>
     <string name="sales_payment_dialog_confirm">Guardar abono</string>
+    <string name="sales_share_error">no se pudo compartir el historial de pagos.</string>
 
     <!-- Inicio -->
     <string name="home_greeting">Hola %1$s, ¿qué quieres hacer hoy?</string>

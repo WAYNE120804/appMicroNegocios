@@ -83,7 +83,7 @@ import java.io.IOException
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductsScreen(vm: ProductsViewModel) {
+fun ProductsScreen(vm: ProductsViewModel,  startWithCreateDialog: Boolean = false) {
     val products by vm.visibleProducts.collectAsState()
     val categories by vm.categories.collectAsState()
     val query by vm.query.collectAsState()
@@ -91,6 +91,12 @@ fun ProductsScreen(vm: ProductsViewModel) {
     val editing by vm.editing.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var viewing by remember { mutableStateOf<ProductEntity?>(null) }
+    LaunchedEffect(startWithCreateDialog) {
+        if (startWithCreateDialog) {
+            vm.clearEdit()
+            showDialog = true
+        }
+    }
 
     fun openNew() { vm.clearEdit(); showDialog = true }
     fun openEdit(p: ProductEntity) { vm.startEdit(p); showDialog = true }

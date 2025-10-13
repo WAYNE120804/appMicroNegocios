@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.androidx.foundation.layout)
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.ui)
+
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
 
     // (Opcional) Navigation Compose, si luego la usamos

@@ -42,7 +42,7 @@
     <string name="products_add_photo_camera">Camera</string>
     <string name="products_max_photos">Maximum of 3 photos per product.</string>
     <string name="products_camera_error">Unable to open camera.</string>
-    <string name="products_camera_permission_denied" translatable="false">Camera permission is required to take photos.</string>
+    <string name="products_camera_permission_denied" >Camera permission is required to take photos.</string>
     <string name="products_detail_title">Product details</string>
     <string name="action_close">Close</string>
     <string name="products_no_photos">No photos added yet.</string>
@@ -97,6 +97,10 @@
     <string name="action_select">Select</string>
     <string name="add_sale_review_hint">Review the order details before finishing.</string>
     <string name="action_add">Add</string>
+    <string name="add_sale_save">Save sale</string>
+    <string name="action_edit">Edit</string>
+    <string name="sales_date_label">Sale date</string>
+    <string name="sales_edit_dialog_change_date">Change date</string>
 
     <!-- Payments -->
     <string name="sales_payment_dialog_title">Record payment</string>

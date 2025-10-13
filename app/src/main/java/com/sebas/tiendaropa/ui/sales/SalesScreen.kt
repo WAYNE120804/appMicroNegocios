@@ -19,8 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -29,6 +29,7 @@ import androidx.compose.material.icons.filled.ReceiptLong
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -37,7 +38,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.view.drawToBitmap
+import androidx.navigation.NavController
 import coil.ImageLoader
 import coil.request.ImageRequest
 import coil.request.SuccessResult
@@ -96,6 +97,7 @@ import java.text.DateFormat
 import java.text.NumberFormat
 import java.util.Date
 import java.util.Locale
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -223,6 +225,8 @@ fun SalesScreen(
     }
 }
 
+
+
 @Composable
 private fun SaleRow(
     details: SaleWithDetails,
@@ -312,6 +316,7 @@ private fun PaymentHistory(payments: List<PaymentEntity>, currency: NumberFormat
         }
     }
 }
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -649,11 +654,13 @@ private fun PaymentReceiptShareLayout(
 }
 
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddSaleScreen(
     vm: SalesViewModel,
-    onFinished: () -> Unit
+    onFinished: () -> Unit,
+    navController: NavController
 ) {
     val step by vm.step.collectAsState()
     val products by vm.availableProducts.collectAsState()
@@ -705,7 +712,9 @@ fun AddSaleScreen(
                     )
 
                     TextButton(
-                        onClick = { showProductDialog = true },
+                        onClick = {
+                            navController.navigate("products?create=true")
+                        },
                         modifier = Modifier.padding(top = 8.dp)
                     ) {
                         Icon(Icons.Default.ShoppingCart, contentDescription = null)
@@ -833,50 +842,59 @@ fun AddSaleScreen(
                     }
                 }
 
+
                 AddSaleStep.REVIEW -> {
-                    val locale = Locale.getDefault()
-                    val dateFormatter = remember(locale) { saleDateFormatter(locale) }
-                    val formattedDate = remember(draft.saleDateMillis, locale) {
-                        formatSaleDate(draft.saleDateMillis, dateFormatter)
+
+                    Text(salesString("add_sale_step_review", "Review and confirm"))
+                    Text(salesString("add_sale_review_hint", "Review the order details before finishing."), modifier = Modifier.padding(top = 4.dp))
+                    Spacer(Modifier.height(12.dp))
+                    Card(modifier = Modifier.fillMaxWidth()) {
+                        val locale = Locale.getDefault()
+                        val dateFormatter = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
+                        val formattedDate = remember(draft.saleDateMillis, locale) { dateFormatter.format(Date(draft.saleDateMillis)) }
+                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(salesString("add_sale_selected_customer", "Selected customer"))
+                            Text(draft.customer?.name.orEmpty())
+                            draft.customer?.phone?.let { Text(it) }
+                        }
                     }
-                    val scrollState = rememberScrollState()
+                    Spacer(Modifier.height(12.dp))
+                    val scroll = rememberScrollState()
 
                     Column(
                         modifier = Modifier
-                            .weight(1f, fill = true)
-                            .verticalScroll(scrollState)
+                            .fillMaxSize()
+                            .verticalScroll(scroll)
                     ) {
                         Text(salesString("add_sale_step_review", "Review and confirm"))
                         Text(
-                            salesString(
-                                "add_sale_review_hint",
-                                "Review the order details before finishing."
-                            ),
+                            salesString("add_sale_review_hint", "Review the order details before finishing."),
                             modifier = Modifier.padding(top = 4.dp)
                         )
                         Spacer(Modifier.height(12.dp))
+
                         Card(modifier = Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                Text(salesString("add_sale_selected_customer", "Selected customer"))
-                                Text(draft.customer?.name.orEmpty())
-                                draft.customer?.phone?.let { Text(it) }
-                            }
-                        }
-                        Spacer(Modifier.height(12.dp))
-                        Card(modifier = Modifier.fillMaxWidth()) {
-                            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                val locale = Locale.getDefault()
+                                val dateFormatter = remember(locale) { DateFormat.getDateInstance(DateFormat.MEDIUM, locale) }
+                                val formattedDate = remember(draft.saleDateMillis, locale) {
+                                    dateFormatter.format(Date(draft.saleDateMillis))
+                                }
                                 Text(salesString("sales_date_label", "Sale date") + ": " + formattedDate)
+
                                 TextButton(onClick = { showSaleDatePicker = true }) {
                                     Text(salesString("sales_edit_dialog_change_date", "Change date"))
                                 }
+
                                 OutlinedTextField(
                                     value = draft.description,
                                     onValueChange = vm::updateDraftDescription,
                                     label = { Text(salesString("field_description", "Description")) },
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier.fillMaxWidth()
                                 )
                             }
                         }
+
                         Spacer(Modifier.height(12.dp))
                         SelectedProductsList(
                             items = draft.items,
@@ -887,14 +905,42 @@ fun AddSaleScreen(
                             readOnly = true
                         )
                         Spacer(Modifier.height(12.dp))
-                        Text(
-                            salesString("add_sale_total", "Total") + ": " + currency.format(totalCents / 100.0)
-                        )
-                        Text(
-                            salesString("add_sale_outstanding", "Outstanding") + ": " + currency.format(totalCents / 100.0)
-                        )
+                        Text(salesString("add_sale_total", "Total") + ": " + currency.format(totalCents / 100.0))
+                        Text(salesString("add_sale_outstanding", "Outstanding") + ": " + currency.format(totalCents / 100.0))
+                        Spacer(Modifier.height(12.dp)) // antes era weight(1f)
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            OutlinedButton(onClick = { vm.back() }, enabled = !isSaving) {
+                                Text(salesString("action_back", "Back"))
+                            }
+                            Button(
+                                onClick = { vm.confirmSale { onFinished() } },
+                                enabled = canFinish && !isSaving
+                            ) {
+                                Text(salesString("add_sale_save", "Save sale"))
+                            }
+                        }
                     }
                     Spacer(Modifier.height(12.dp))
+                    SelectedProductsList(
+                        items = draft.items,
+                        currency = currency,
+                        onIncrease = { vm.addProduct(it.product) },
+                        onDecrease = { vm.updateQuantity(it.product.id, it.quantity - 1) },
+                        onRemove = { vm.removeProduct(it.product.id) },
+                        readOnly = true
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        salesString("add_sale_total", "Total") + ": " + currency.format(totalCents / 100.0)
+                    )
+                    Text(
+                        salesString("add_sale_outstanding", "Outstanding") + ": " + currency.format(totalCents / 100.0)
+                    )
+                    Spacer(Modifier.weight(1f, fill = true))
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween
@@ -940,10 +986,10 @@ fun AddSaleScreen(
                             DatePicker(state = datePickerState)
                         }
                     }
-                }
             }
         }
     }
+}
 
     if (showProductDialog) {
         CreateProductDialog(
@@ -1264,10 +1310,13 @@ private fun salesString(name: String, fallback: String, vararg formatArgs: Any?)
     val context = LocalContext.current
     val resId = remember(name) { context.resources.getIdentifier(name, "string", context.packageName) }
     return if (resId != 0) {
-        if (formatArgs.isNotEmpty()) stringResource(resId, *formatArgs) else stringResource(resId)
+        if (formatArgs.isNotEmpty()) stringResource(resId, *arrayOf(formatArgs)) else stringResource(resId)
     } else {
         if (formatArgs.isNotEmpty()) String.format(Locale.getDefault(), fallback, *formatArgs) else fallback
     }
 }
+
+
+
 
 
