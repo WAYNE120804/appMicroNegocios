@@ -57,8 +57,8 @@ fun AuthenticationScreen(
 
     val onUnlockState = rememberUpdatedState(onUnlock)
 
-    val canUseBiometric = remember(state.biometricEnabled, activity) {
-        if (!state.biometricEnabled || activity == null) {
+    val canUseBiometric = remember(state.biometricEnabled, state.pinHash, activity) {
+        if (!state.biometricEnabled || state.pinHash == null || activity == null) {
             false
         } else {
             val manager = BiometricManager.from(activity)
