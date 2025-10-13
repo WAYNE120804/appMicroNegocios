@@ -27,6 +27,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
             repo.clearPinHash()
         }
     }
+
     fun setBiometricEnabled(v: Boolean) = viewModelScope.launch {
         if (v) {
             val current = state.value
