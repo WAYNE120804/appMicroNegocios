@@ -30,6 +30,10 @@ interface ExpenseDao {
     fun observeAll(): Flow<List<ExpenseWithCategory>>
 
     @Transaction
+    @Query("SELECT * FROM expenses ORDER BY dateMillis DESC, id DESC")
+    suspend fun getAllSnapshot(): List<ExpenseWithCategory>
+
+    @Transaction
     @Query(
         """
             SELECT * FROM expenses
