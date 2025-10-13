@@ -69,6 +69,7 @@ fun AuthenticationScreen(
 
     var biometricMessage by remember { mutableStateOf<String?>(null) }
     var biometricAttempted by rememberSaveable { mutableStateOf(false) }
+    var biometricOptOut by rememberSaveable { mutableStateOf(false) }
 
     val promptInfo = remember {
         BiometricPrompt.PromptInfo.Builder()
@@ -91,7 +92,12 @@ fun AuthenticationScreen(
                 }
 
                 override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    biometricMessage = errString.toString()
+                    if (errorCode == BiometricPrompt.ERROR_NEGATIVE_BUTTON) {
+                        biometricOptOut = true
+                        biometricMessage = null
+                    } else {
+                        biometricMessage = errString.toString()
+                    }
                     biometricAttempted = false
                 }
 
@@ -102,8 +108,8 @@ fun AuthenticationScreen(
         }
     }
 
-    LaunchedEffect(canUseBiometric, biometricAttempted) {
-        if (canUseBiometric && biometricPrompt != null && !biometricAttempted) {
+    LaunchedEffect(canUseBiometric, biometricAttempted, biometricOptOut) {
+        if (canUseBiometric && biometricPrompt != null && !biometricAttempted && !biometricOptOut) {
             // Pequeño retraso para evitar lanzar el prompt antes de que la vista esté lista
             delay(200)
             biometricAttempted = true
@@ -124,7 +130,9 @@ fun AuthenticationScreen(
             Button(
                 onClick = {
                     if (biometricPrompt != null) {
+                        biometricOptOut = false
                         biometricAttempted = true
+                        biometricMessage = null
                         biometricPrompt.authenticate(promptInfo)
                     }
                 },
