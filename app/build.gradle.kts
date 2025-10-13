@@ -69,6 +69,7 @@ dependencies {
     implementation(libs.androidx.foundation.layout)
     implementation(libs.androidx.foundation)
     implementation(libs.androidx.ui)
+    implementation(libs.androidx.media3.common.ktx)
 
     debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
 

@@ -18,6 +18,7 @@ foundation = "1.9.3"
 ui = "1.9.3"
 benchmarkTraceprocessor = "1.4.1"
 benchmarkTraceprocessorJvm = "1.4.1"
+media3CommonKtx = "1.8.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -37,6 +38,7 @@ androidx-foundation = { group = "androidx.compose.foundation", name = "foundatio
 androidx-ui = { group = "androidx.compose.ui", name = "ui", version.ref = "ui" }
 androidx-benchmark-traceprocessor = { group = "androidx.benchmark", name = "benchmark-traceprocessor", version.ref = "benchmarkTraceprocessor" }
 androidx-benchmark-traceprocessor-jvm = { group = "androidx.benchmark", name = "benchmark-traceprocessor-jvm", version.ref = "benchmarkTraceprocessorJvm" }
+androidx-media3-common-ktx = { group = "androidx.media3", name = "media3-common-ktx", version.ref = "media3CommonKtx" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
