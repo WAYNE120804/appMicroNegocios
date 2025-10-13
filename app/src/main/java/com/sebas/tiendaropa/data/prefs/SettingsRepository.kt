@@ -11,7 +11,10 @@ data class SettingsState(
     val ownerName: String = "Usuario",
     val logoUri: String? = null,
     val pinEnabled: Boolean = false,
-    val biometricEnabled: Boolean = false
+    val biometricEnabled: Boolean = false,
+    val pinHash: String? = null,
+    val securityQuestion: String? = null,
+    val securityAnswerHash: String? = null
 )
 
 class SettingsRepository(private val context: Context) {
@@ -22,7 +25,10 @@ class SettingsRepository(private val context: Context) {
             ownerName = p[StorePrefsKeys.OWNER_NAME] ?: "Usuario",
             logoUri = p[StorePrefsKeys.LOGO_URI],
             pinEnabled = p[StorePrefsKeys.PIN_ENABLED] ?: false,
-            biometricEnabled = p[StorePrefsKeys.BIOMETRIC_ENABLED] ?: false
+            biometricEnabled = p[StorePrefsKeys.BIOMETRIC_ENABLED] ?: false,
+            pinHash = p[StorePrefsKeys.PIN_HASH],
+            securityQuestion = p[StorePrefsKeys.SECURITY_Q],
+            securityAnswerHash = p[StorePrefsKeys.SECURITY_A_HASH]
         )
     }
 
@@ -34,8 +40,19 @@ class SettingsRepository(private val context: Context) {
     suspend fun setPinEnabled(v: Boolean) = context.dataStore.edit { it[StorePrefsKeys.PIN_ENABLED] = v }
     suspend fun setBiometricEnabled(v: Boolean) = context.dataStore.edit { it[StorePrefsKeys.BIOMETRIC_ENABLED] = v }
 
-    // Hooks para más adelante (PIN/seguridad)
     suspend fun setPinHash(hash: String) = context.dataStore.edit { it[StorePrefsKeys.PIN_HASH] = hash }
-    suspend fun setSecurityQuestion(q: String) = context.dataStore.edit { it[StorePrefsKeys.SECURITY_Q] = q }
-    suspend fun setSecurityAnswerHash(hash: String) = context.dataStore.edit { it[StorePrefsKeys.SECURITY_A_HASH] = hash }
+    suspend fun clearPinHash() = context.dataStore.edit { it.remove(StorePrefsKeys.PIN_HASH) }
+    suspend fun setSecurityQuestion(q: String?) = context.dataStore.edit {
+        if (q == null) {
+            it.remove(StorePrefsKeys.SECURITY_Q)
+        } else {
+            it[StorePrefsKeys.SECURITY_Q] = q
+        }
+    }
+    suspend fun setSecurityAnswerHash(hash: String) = context.dataStore.edit {
+        it[StorePrefsKeys.SECURITY_A_HASH] = hash
+    }
+    suspend fun clearSecurityAnswer() = context.dataStore.edit {
+        it.remove(StorePrefsKeys.SECURITY_A_HASH)
+    }
 }

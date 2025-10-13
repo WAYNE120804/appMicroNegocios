@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.sebas.tiendaropa.data.prefs.SettingsRepository
 import com.sebas.tiendaropa.data.prefs.SettingsState
+import com.sebas.tiendaropa.util.SecurityUtils
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -19,8 +20,33 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     fun setStoreName(v: String) = viewModelScope.launch { repo.setStoreName(v) }
     fun setOwnerName(v: String) = viewModelScope.launch { repo.setOwnerName(v) }
     fun setLogoUri(v: String?) = viewModelScope.launch { repo.setLogoUri(v) }
-    fun setPinEnabled(v: Boolean) = viewModelScope.launch { repo.setPinEnabled(v) }
+    fun setPinEnabled(v: Boolean) = viewModelScope.launch {
+        repo.setPinEnabled(v)
+        if (!v) {
+            repo.clearPinHash()
+        }
+    }
     fun setBiometricEnabled(v: Boolean) = viewModelScope.launch { repo.setBiometricEnabled(v) }
+
+    fun savePin(pin: String) = viewModelScope.launch {
+        repo.setPinHash(SecurityUtils.sha256(pin))
+    }
+
+    fun clearPin() = viewModelScope.launch { repo.clearPinHash() }
+
+    fun setSecurityQuestion(question: String?) = viewModelScope.launch {
+        repo.setSecurityQuestion(question)
+        if (question == null) {
+            repo.clearSecurityAnswer()
+        }
+    }
+
+    fun saveSecurityAnswer(answer: String) = viewModelScope.launch {
+        val normalized = answer.trim().lowercase()
+        repo.setSecurityAnswerHash(SecurityUtils.sha256(normalized))
+    }
+
+    fun clearSecurityAnswer() = viewModelScope.launch { repo.clearSecurityAnswer() }
 
     companion object {
         fun factory(context: Context): ViewModelProvider.Factory =
