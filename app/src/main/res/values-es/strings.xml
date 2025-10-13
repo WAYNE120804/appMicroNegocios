@@ -124,11 +124,14 @@
     <string name="expenses_field_date_value">Fecha: %1$s</string>
     <string name="expenses_change_date">Cambiar fecha</string>
     <string name="expenses_field_payment_method">Método de pago</string>
-    <string name="expenses_manage_categories">Ver categorías</string>
+    <string name="expenses_manage_categories">Ver categorías de gastos</string>
     <string name="expenses_add_photo">Adjuntar foto</string>
+    <string name="expenses_add_photo_camera">Tomar foto</string>
     <string name="expenses_remove_photo">Quitar foto</string>
     <string name="expenses_dialog_new_title">Nuevo gasto</string>
     <string name="expenses_dialog_edit_title">Editar gasto</string>
+    <string name="expenses_camera_permission_denied">Se requiere permiso de cámara para tomar fotos.</string>
+    <string name="expenses_camera_error">No se pudo abrir la cámara. Inténtalo de nuevo.</string>
 
     <!-- Categorías de gastos -->
     <string name="expense_categories_title">Categorías de gastos</string>
