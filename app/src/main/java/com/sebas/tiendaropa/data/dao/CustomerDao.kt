@@ -14,6 +14,9 @@ interface CustomerDao {
     @Query("SELECT * FROM customers ORDER BY name ASC")
     fun observeAll(): Flow<List<CustomerEntity>>
 
+    @Query("SELECT * FROM customers ORDER BY name ASC")
+    suspend fun getAllSnapshot(): List<CustomerEntity>
+
     @Query("""
     SELECT * FROM customers
     WHERE name  LIKE '%' || :q || '%'

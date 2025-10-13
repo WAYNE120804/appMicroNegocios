@@ -1,6 +1,8 @@
 package com.sebas.tiendaropa.ui.settings
 
 import android.content.Intent
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -12,10 +14,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Divider
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,6 +36,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -39,10 +44,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-
+import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import com.sebas.tiendaropa.data.prefs.SettingsState
+import com.sebas.tiendaropa.util.DataExportManager
 import com.sebas.tiendaropa.util.SecurityUtils
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +65,12 @@ fun SettingsScreen(
     onSaveSecurityAnswer: (String) -> Unit
 ) {
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+    val applicationContext = context.applicationContext
+    val dataExportManager = remember(applicationContext) { DataExportManager(applicationContext) }
+
+    var exportingBackup by remember { mutableStateOf(false) }
+    var exportError by remember { mutableStateOf<String?>(null) }
 
     // Estado local para editar sin saltos de cursor
     var storeNameLocal by rememberSaveable { mutableStateOf(state.storeName) }
@@ -339,6 +352,81 @@ fun SettingsScreen(
             ) {
                 Text("Guardar pregunta de seguridad")
             }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Divider()
+
+        Text("Respaldo de datos", style = MaterialTheme.typography.titleMedium)
+
+        Button(
+            onClick = {
+                coroutineScope.launch {
+                    exportingBackup = true
+                    exportError = null
+                    try {
+                        val backupFile = dataExportManager.createBackupZip()
+                        val uri = FileProvider.getUriForFile(
+                            context,
+                            "${context.packageName}.fileprovider",
+                            backupFile
+                        )
+                        val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                            type = "application/zip"
+                            putExtra(Intent.EXTRA_STREAM, uri)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                            putExtra(Intent.EXTRA_SUBJECT, "Respaldo de datos")
+                            putExtra(
+                                Intent.EXTRA_TEXT,
+                                "Respaldo generado desde la app tiendaRopa."
+                            )
+                        }
+                        val chooser = Intent.createChooser(shareIntent, "Compartir respaldo")
+                        if (shareIntent.resolveActivity(context.packageManager) != null) {
+                            context.startActivity(chooser)
+                        } else {
+                            exportError = "No hay aplicaciones disponibles para compartir el respaldo."
+                            Toast.makeText(
+                                context,
+                                "No hay aplicaciones disponibles para compartir el respaldo.",
+                                Toast.LENGTH_LONG
+                            ).show()
+                        }
+                    } catch (t: Throwable) {
+                        Log.e("SettingsScreen", "Error generando respaldo", t)
+                        exportError = "No se pudo generar el respaldo."
+                        Toast.makeText(
+                            context,
+                            "No se pudo generar el respaldo.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    } finally {
+                        exportingBackup = false
+                    }
+                }
+            },
+            enabled = !exportingBackup,
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            if (exportingBackup) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    strokeWidth = 2.dp
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Generando respaldo...")
+            } else {
+                Text("Exportar información")
+            }
+        }
+
+        exportError?.let {
+            Text(
+                it,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodySmall
+            )
         }
 
         Spacer(Modifier.height(8.dp))
