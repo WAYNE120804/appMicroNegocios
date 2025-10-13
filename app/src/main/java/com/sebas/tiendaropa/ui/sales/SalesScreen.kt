@@ -13,6 +13,8 @@ import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -62,7 +64,9 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -95,7 +99,9 @@ import com.sebas.tiendaropa.data.entity.PaymentEntity
 import com.sebas.tiendaropa.data.entity.ProductEntity
 import com.sebas.tiendaropa.data.prefs.SettingsRepository
 import com.sebas.tiendaropa.data.prefs.SettingsState
+import com.sebas.tiendaropa.data.repo.PaymentUpdate
 import com.sebas.tiendaropa.ui.common.currencyFormatter
+import com.sebas.tiendaropa.ui.common.formatPesosFromCents
 import com.sebas.tiendaropa.ui.common.formatPesosInput
 import com.sebas.tiendaropa.ui.common.integerFormatter
 import com.sebas.tiendaropa.ui.common.parsePesosToCents
@@ -248,8 +254,8 @@ fun SalesScreen(
             sale = target,
             isSaving = isUpdatingSale,
             onDismiss = { if (!isUpdatingSale) editTarget = null },
-            onConfirm = { millis, description ->
-                vm.updateSaleDetails(target.sale.id, millis, description) {
+            onConfirm = { millis, description, payments ->
+                vm.updateSaleDetails(target.sale.id, millis, description, payments) {
                     editTarget = null
                 }
             }
@@ -259,6 +265,7 @@ fun SalesScreen(
 
 
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun SaleCard(
     details: SaleWithDetails,
@@ -326,23 +333,22 @@ private fun SaleCard(
                 PaymentHistory(payments = details.payments, currency = currency)
             }
             Divider()
-            Row(
-                horizontalArrangement = Arrangement.End,
-                verticalAlignment = Alignment.CenterVertically
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-            TextButton(onClick = { onShare(details) }) {
-                Icon(
-                    Icons.Default.ReceiptLong,
-                    contentDescription = salesString("sales_share_button", "Share payments")
-                )
-                Spacer(Modifier.width(4.dp))
-                Text(salesString("sales_share_button", "Share payments"))
-            }
-            Spacer(Modifier.width(8.dp))
+                TextButton(onClick = { onShare(details) }) {
+                    Icon(
+                        Icons.Default.ReceiptLong,
+                        contentDescription = salesString("sales_share_button", "Share payments")
+                    )
+                    Spacer(Modifier.width(4.dp))
+                    Text(salesString("sales_share_button", "Share payments"))
+                }
                 TextButton(onClick = { onEdit(details) }) {
                     Text(salesString("action_edit", "Edit"))
                 }
-                Spacer(Modifier.width(8.dp))
                 TextButton(onClick = { onAddPayment(details) }, enabled = canAddPayment) {
                     Icon(Icons.Default.Add, contentDescription = null)
                     Spacer(Modifier.width(4.dp))
@@ -390,7 +396,7 @@ private fun EditSaleDialog(
     sale: SaleWithDetails,
     isSaving: Boolean,
     onDismiss: () -> Unit,
-    onConfirm: (Long, String?) -> Unit
+    onConfirm: (Long, String?, List<PaymentUpdate>) -> Unit
 ) {
     var selectedDateMillis by rememberSaveable { mutableStateOf(sale.sale.createdAtMillis) }
     var description by rememberSaveable { mutableStateOf(sale.sale.description.orEmpty()) }
@@ -399,6 +405,25 @@ private fun EditSaleDialog(
     val dateFormatter = remember(locale) { saleDateFormatter(locale) }
     val formattedDate = remember(selectedDateMillis, locale) {
         formatSaleDate(selectedDateMillis, dateFormatter)
+    }
+    val pesosFormatter = remember { integerFormatter() }
+    val paymentInputs = remember(sale.payments) {
+        mutableStateListOf(
+            *sale.payments.map { payment ->
+                EditablePaymentInput(
+                    id = payment.id,
+                    amount = formatPesosFromCents(payment.amountCents, pesosFormatter),
+                    description = payment.description.orEmpty()
+                )
+            }.toTypedArray()
+        )
+    }
+    val arePaymentsValid by remember(paymentInputs) {
+        derivedStateOf {
+            paymentInputs.all { input ->
+                parsePesosToCents(input.amount)?.let { it > 0 } == true
+            }
+        }
     }
 
     AlertDialog(
@@ -420,16 +445,80 @@ private fun EditSaleDialog(
                         .fillMaxWidth()
                         .padding(top = 8.dp)
                 )
+                if (paymentInputs.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = salesString("sales_edit_payments_header", "Payments"),
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Text(
+                        text = salesString(
+                            "sales_edit_payments_hint",
+                            "Update the existing payments if you need to correct them."
+                        ),
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(top = 4.dp)
+                    )
+                    paymentInputs.forEachIndexed { index, input ->
+                        OutlinedTextField(
+                            value = input.amount,
+                            onValueChange = { value ->
+                                val formatted = formatPesosInput(value, pesosFormatter)
+                                paymentInputs[index] = input.copy(amount = formatted)
+                            },
+                            label = {
+                                Text(
+                                    salesString(
+                                        "sales_edit_payment_amount_label",
+                                        "Payment %d amount",
+                                        index + 1
+                                    )
+                                )
+                            },
+                            isError = parsePesosToCents(input.amount)?.let { it <= 0 } != false,
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp)
+                        )
+                        OutlinedTextField(
+                            value = input.description,
+                            onValueChange = { value ->
+                                paymentInputs[index] = input.copy(description = value)
+                            },
+                            label = {
+                                Text(
+                                    salesString(
+                                        "sales_edit_payment_description_label",
+                                        "Payment %d description",
+                                        index + 1
+                                    )
+                                )
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp)
+                        )
+                    }
+                }
             }
         },
         confirmButton = {
             FilledTonalButton(
                 onClick = {
-                    if (!isSaving) {
-                        onConfirm(selectedDateMillis, description.trim().takeIf { it.isNotEmpty() })
+                    if (!isSaving && arePaymentsValid) {
+                        val sanitizedDescription = description.trim().takeIf { it.isNotEmpty() }
+                        val updates = paymentInputs.map { input ->
+                            PaymentUpdate(
+                                id = input.id,
+                                amountCents = parsePesosToCents(input.amount)!!,
+                                description = input.description.trim().takeIf { it.isNotEmpty() }
+                            )
+                        }
+                        onConfirm(selectedDateMillis, sanitizedDescription, updates)
                     }
                 },
-                enabled = !isSaving
+                enabled = !isSaving && arePaymentsValid
             ) {
                 Text(salesString("action_save", "Save"))
             }
@@ -471,6 +560,12 @@ private fun EditSaleDialog(
         }
     }
 }
+
+private data class EditablePaymentInput(
+    val id: Long,
+    val amount: String,
+    val description: String
+)
 
 @Composable
 private fun AddPaymentDialog(

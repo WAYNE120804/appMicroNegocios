@@ -12,6 +12,7 @@ import com.sebas.tiendaropa.data.entity.ProductEntity
 import com.sebas.tiendaropa.data.entity.SaleItemEntity
 import com.sebas.tiendaropa.data.repo.CategoryRepository
 import com.sebas.tiendaropa.data.repo.CustomersRepository
+import com.sebas.tiendaropa.data.repo.PaymentUpdate
 import com.sebas.tiendaropa.data.repo.ProductsRepository
 import com.sebas.tiendaropa.data.repo.SalesRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -269,12 +270,26 @@ class SalesViewModel(
         }
     }
 
-    fun updateSaleDetails(saleId: Long, dateMillis: Long, description: String?, onSuccess: () -> Unit = {}) {
+    fun updateSaleDetails(
+        saleId: Long,
+        dateMillis: Long,
+        description: String?,
+        paymentUpdates: List<PaymentUpdate>,
+        onSuccess: () -> Unit = {}
+    ) {
         viewModelScope.launch {
             _isUpdatingSale.value = true
             try {
                 val sanitizedDescription = description?.trim()
-                salesRepository.updateSale(saleId, dateMillis, sanitizedDescription)
+                val sanitizedPayments = paymentUpdates.map { update ->
+                    update.copy(description = update.description?.trim())
+                }
+                salesRepository.updateSale(
+                    saleId = saleId,
+                    createdAtMillis = dateMillis,
+                    description = sanitizedDescription,
+                    paymentUpdates = sanitizedPayments
+                )
                 onSuccess()
             } finally {
                 _isUpdatingSale.value = false

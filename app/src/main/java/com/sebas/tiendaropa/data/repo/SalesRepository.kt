@@ -7,6 +7,12 @@ import com.sebas.tiendaropa.data.entity.SaleEntity
 import com.sebas.tiendaropa.data.entity.SaleItemEntity
 import kotlinx.coroutines.flow.Flow
 
+data class PaymentUpdate(
+    val id: Long,
+    val amountCents: Long,
+    val description: String?
+)
+
 class SalesRepository(private val saleDao: SaleDao) {
 
     val sales: Flow<List<SaleWithDetails>> = saleDao.observeSales()
@@ -29,13 +35,23 @@ class SalesRepository(private val saleDao: SaleDao) {
     suspend fun updateSale(
         saleId: Long,
         createdAtMillis: Long,
-        description: String?
+        description: String?,
+        paymentUpdates: List<PaymentUpdate> = emptyList()
     ) {
         saleDao.updateSaleDetails(
             id = saleId,
             createdAtMillis = createdAtMillis,
             description = description?.ifBlank { null }
         )
+        if (paymentUpdates.isNotEmpty()) {
+            paymentUpdates.forEach { update ->
+                saleDao.updatePayment(
+                    id = update.id,
+                    amountCents = update.amountCents,
+                    description = update.description?.ifBlank { null }
+                )
+            }
+        }
     }
 
 
