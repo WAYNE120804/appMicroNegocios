@@ -13,6 +13,12 @@ fun integerFormatter(): NumberFormat =
         minimumFractionDigits = 0
     }
 
+fun percentFormatter(): NumberFormat =
+    NumberFormat.getPercentInstance(Locale("es", "CO")).apply {
+        minimumFractionDigits = 1
+        maximumFractionDigits = 1
+    }
+
 fun formatPesosInput(raw: String, formatter: NumberFormat): String {
     val digitsOnly = raw.filter(Char::isDigit)
     if (digitsOnly.isEmpty()) return ""
