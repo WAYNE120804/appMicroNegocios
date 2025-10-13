@@ -112,6 +112,31 @@
     <string name="home_summary_purchases">Compras de productos</string>
     <string name="home_summary_profit">Ganancias</string>
 
+    <!-- Gastos -->
+    <string name="expenses_title">Gastos</string>
+    <string name="expenses_search_label">Gasto</string>
+    <string name="expenses_search_placeholder">Buscar por concepto, descripción o método</string>
+    <string name="expenses_summary_title">Total de gastos</string>
+    <string name="expenses_no_category">Sin categoría</string>
+    <string name="expenses_payment_method_label">Método de pago: %1$s</string>
+    <string name="expenses_field_concept">Concepto</string>
+    <string name="expenses_field_amount">Monto</string>
+    <string name="expenses_field_date_value">Fecha: %1$s</string>
+    <string name="expenses_change_date">Cambiar fecha</string>
+    <string name="expenses_field_payment_method">Método de pago</string>
+    <string name="expenses_manage_categories">Ver categorías</string>
+    <string name="expenses_add_photo">Adjuntar foto</string>
+    <string name="expenses_remove_photo">Quitar foto</string>
+    <string name="expenses_dialog_new_title">Nuevo gasto</string>
+    <string name="expenses_dialog_edit_title">Editar gasto</string>
+
+    <!-- Categorías de gastos -->
+    <string name="expense_categories_title">Categorías de gastos</string>
+    <string name="expense_categories_search_label">Categoría</string>
+    <string name="expense_categories_search_placeholder">Buscar categorías</string>
+    <string name="expense_categories_new_title">Nueva categoría de gasto</string>
+    <string name="expense_categories_edit_title">Editar categoría de gasto</string>
+
 
 
 

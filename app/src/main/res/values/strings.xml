@@ -146,4 +146,7 @@
     <string name="expense_categories_search_placeholder">Search categories</string>
     <string name="expense_categories_new_title">New expense category</string>
     <string name="expense_categories_edit_title">Edit expense category</string>
+
+
+
 </resources>
