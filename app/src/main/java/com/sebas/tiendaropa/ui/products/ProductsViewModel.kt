@@ -146,12 +146,17 @@ val categories: StateFlow<List<CategoryEntity>> =
         )
 
     // ---- Utils ----
-    private fun pesosToCents(txt: String): Long? {
-        // admite "12000", "12.000", "12,000" -> deja solo dígitos
-        val digits = txt.filter { it.isDigit() }
-        if (digits.isBlank()) return null
-        return digits.toLong() * 100L
+    private fun pesosToCents(txt: String): Long? = try {
+        val digits = txt.filter(Char::isDigit)
+        if (digits.isBlank()) null
+        else {
+            val base = digits.toLong()
+            Math.multiplyExact(base, 100L)
+        }
+    } catch (_: Throwable) {
+        null
     }
+
 
     companion object {
         fun factory(ctx: Context) = object : ViewModelProvider.Factory {

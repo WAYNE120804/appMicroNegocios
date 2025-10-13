@@ -5,14 +5,15 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -51,7 +52,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import com.sebas.tiendaropa.R
 import com.sebas.tiendaropa.data.dao.ExpenseWithCategory
 import com.sebas.tiendaropa.data.dao.SaleWithDetails
@@ -277,6 +277,7 @@ private fun QuickActionsRow(
     onAddExpense: () -> Unit,
 ) {
     FlowRow(
+        maxItemsInEachRow = 2,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
         modifier = Modifier.fillMaxWidth(),
@@ -284,27 +285,35 @@ private fun QuickActionsRow(
         QuickActionButton(
             text = stringResource(R.string.action_add_sale),
             onClick = onAddSale,
+            modifier = Modifier.weight(1f, fill = true)
         )
         QuickActionButton(
             text = stringResource(R.string.home_action_add_payment),
             onClick = onAddPayment,
+            modifier = Modifier.weight(1f, fill = true)
         )
         QuickActionButton(
             text = stringResource(R.string.home_action_add_client),
             onClick = onAddClient,
+            modifier = Modifier.weight(1f, fill = true)
         )
         QuickActionButton(
             text = stringResource(R.string.home_action_add_expense),
             onClick = onAddExpense,
+            modifier = Modifier.weight(1f, fill = true)
         )
     }
 }
 
 @Composable
-private fun QuickActionButton(text: String, onClick: () -> Unit) {
+private fun QuickActionButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     Button(
         onClick = onClick,
-        modifier = Modifier.widthIn(min = 180.dp),
+        modifier = modifier
     ) {
         Text(text, maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
@@ -380,15 +389,15 @@ private fun DashboardSections(
         computeTrend(current.totalDebt, previous.totalDebt)
     }
 
-    val emptySalesMessage = remember(current.salesTotal) {
+    val emptySalesMessage =
         if (current.salesTotal <= 0.0) stringResource(R.string.home_empty_sales) else null
-    }
-    val emptyExpensesMessage = remember(current.totalExpenses) {
+
+    val emptyExpensesMessage =
         if (current.totalExpenses <= 0.0) stringResource(R.string.home_empty_expenses) else null
-    }
-    val emptyDebtMessage = remember(current.totalDebt) {
+
+    val emptyDebtMessage =
         if (current.totalDebt <= 0.0) stringResource(R.string.home_empty_debt) else null
-    }
+
 
     val cardModifier = Modifier.widthIn(min = 220.dp)
 

@@ -1,6 +1,5 @@
 package com.sebas.tiendaropa.ui.products
 
-import android.Manifest
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -11,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -353,6 +352,7 @@ private fun ProductDialog(
     var name by remember { mutableStateOf(initial?.name ?: "") }
     var description by remember { mutableStateOf(initial?.description ?: "") }
     var avisos by remember { mutableStateOf(initial?.avisos ?: "") }
+
     val pesosInputFormatter = remember { integerFormatter() }
     var valorCompra by remember {
         mutableStateOf(initial?.let { formatPesosFromCents(it.valorCompraCents, pesosInputFormatter) } ?: "")
@@ -360,20 +360,19 @@ private fun ProductDialog(
     var valorVenta by remember {
         mutableStateOf(initial?.let { formatPesosFromCents(it.valorVentaCents, pesosInputFormatter) } ?: "")
     }
+
     var selectedCategoryId by remember { mutableStateOf(initial?.categoryId) }
     var expanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
+
     val imageUris = remember { mutableStateListOf<String>() }
     var pendingCameraUri by remember { mutableStateOf<Uri?>(null) }
     var expandedImageUri by remember { mutableStateOf<String?>(null) }
 
-
+    // Cargar estado inicial
     LaunchedEffect(initial?.id) {
         imageUris.clear()
         imageUris.addAll(initial?.imageUris ?: emptyList())
-    }
-
-    LaunchedEffect(initial?.id) {
         name = initial?.name ?: ""
         description = initial?.description ?: ""
         avisos = initial?.avisos ?: ""
@@ -381,13 +380,11 @@ private fun ProductDialog(
         valorVenta = initial?.let { formatPesosFromCents(it.valorVentaCents, pesosInputFormatter) } ?: ""
         selectedCategoryId = initial?.categoryId ?: categories.firstOrNull()?.id
     }
-
     LaunchedEffect(categories) {
-        if (selectedCategoryId == null) {
-            selectedCategoryId = categories.firstOrNull()?.id
-        }
+        if (selectedCategoryId == null) selectedCategoryId = categories.firstOrNull()?.id
     }
 
+    // Launchers
     val pickImageLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let {
             try {
@@ -395,8 +392,7 @@ private fun ProductDialog(
                     it,
                     Intent.FLAG_GRANT_READ_URI_PERMISSION
                 )
-            } catch (_: SecurityException) {
-            }
+            } catch (_: SecurityException) {}
             if (!imageUris.contains(it.toString())) {
                 if (imageUris.size >= 3) {
                     Toast.makeText(context, context.getString(R.string.products_max_photos), Toast.LENGTH_SHORT).show()
@@ -406,7 +402,6 @@ private fun ProductDialog(
             }
         }
     }
-
     val captureLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         val uri = pendingCameraUri
         if (success && uri != null) {
@@ -421,7 +416,6 @@ private fun ProductDialog(
         }
         pendingCameraUri = null
     }
-
     val cameraPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
@@ -437,9 +431,7 @@ private fun ProductDialog(
         } else {
             Toast.makeText(
                 context,
-                context.getString(
-                    R.string
-                        .products_camera_permission_denied),
+                context.getString(R.string.products_camera_permission_denied),
                 Toast.LENGTH_SHORT
             ).show()
         }
@@ -451,18 +443,15 @@ private fun ProductDialog(
         val venta = parsePesosToCents(valorVenta)
         if (compra != null && venta != null) venta - compra else null
     }
-
     val formScrollState = rememberScrollState()
+    val formatter = remember { currencyFormatter() }
 
+    // ---------- Dialog principal ----------
     AlertDialog(
         onDismissRequest = onDismiss,
         title = {
-            Text(
-                if (initial == null)
-                    stringResource(R.string.new_product_title)
-                else
-                    stringResource(R.string.edit_product_title)
-            )
+            Text(if (initial == null) stringResource(R.string.new_product_title)
+            else stringResource(R.string.edit_product_title))
         },
         text = {
             Column(
@@ -471,8 +460,8 @@ private fun ProductDialog(
                     .heightIn(max = 420.dp)
                     .verticalScroll(formScrollState)
                     .padding(bottom = 4.dp)
-            ){
-            OutlinedTextField(
+            ) {
+                OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
                     label = { Text(stringResource(R.string.field_name)) },
@@ -517,11 +506,8 @@ private fun ProductDialog(
                             if (imageUris.size >= 3) {
                                 Toast.makeText(context, context.getString(R.string.products_max_photos), Toast.LENGTH_SHORT).show()
                             } else {
-                                when {
-                                    ContextCompat.checkSelfPermission(
-                                        context,
-                                        Manifest.permission.CAMERA
-                                    ) == PackageManager.PERMISSION_GRANTED -> {
+                                when (ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA)) {
+                                    PackageManager.PERMISSION_GRANTED -> {
                                         launchCameraCapture(
                                             context = context,
                                             imageUris = imageUris,
@@ -531,9 +517,7 @@ private fun ProductDialog(
                                             }
                                         )
                                     }
-                                    else -> {
-                                        cameraPermissionLauncher.launch(Manifest.permission.CAMERA)
-                                    }
+                                    else -> cameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
                                 }
                             }
                         }
@@ -589,7 +573,6 @@ private fun ProductDialog(
                             }
                         }
                     )
-
                     ExposedDropdownMenu(
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
@@ -631,7 +614,6 @@ private fun ProductDialog(
                     modifier = Modifier.fillMaxWidth()
                 )
 
-                val formatter = remember { currencyFormatter() }
                 profitPreview?.let {
                     Text(
                         text = stringResource(R.string.field_profit) + ": " + formatter.format(it / 100.0),
@@ -642,43 +624,46 @@ private fun ProductDialog(
         },
         confirmButton = {
             FilledTonalButton(
-                        onClick = {
-                            if (canSave) {
-                                onSave(
-                                    name,
-                                    description.takeIf { it.isNotBlank() },
-                                    avisos.takeIf { it.isNotBlank() },
-                                    selectedCategoryId!!,
-                                    valorCompra,
-                                    valorVenta,
-                                    imageUris.toList(),
-                                    initial?.soldSaleId
-                                )
-                            }
-                        },
-                        enabled = canSave
-            ) { Text(stringResource(R.string.action_save)) }
-            expandedImageUri?.let { uri ->
-                Dialog(onDismissRequest = { expandedImageUri = null }) {
-                    Card(shape = MaterialTheme.shapes.large) {
-                        AsyncImage(
-                            model = uri,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 240.dp, max = 420.dp)
-                                .padding(8.dp),
-                            contentScale = ContentScale.Fit
+                onClick = {
+                    if (canSave) {
+                        onSave(
+                            name,
+                            description.takeIf { it.isNotBlank() },
+                            avisos.takeIf { it.isNotBlank() },
+                            selectedCategoryId!!,
+                            valorCompra,
+                            valorVenta,
+                            imageUris.toList(),
+                            initial?.soldSaleId
                         )
                     }
-                }
-            }
+                },
+                enabled = canSave
+            ) { Text(stringResource(R.string.action_save)) }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.action_cancel)) }
         }
     )
+
+    // ---------- Viewer de imagen ampliada (fuera del AlertDialog) ----------
+    expandedImageUri?.let { uri ->
+        Dialog(onDismissRequest = { expandedImageUri = null }) {
+            Card(shape = MaterialTheme.shapes.large) {
+                AsyncImage(
+                    model = uri,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 240.dp, max = 420.dp)
+                        .padding(8.dp),
+                    contentScale = ContentScale.Fit
+                )
+            }
+        }
+    }
 }
+
 
 private fun launchCameraCapture(
     context: Context,

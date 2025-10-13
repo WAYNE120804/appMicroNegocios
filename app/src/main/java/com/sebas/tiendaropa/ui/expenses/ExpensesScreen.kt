@@ -16,9 +16,9 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -419,14 +419,15 @@ private fun ExpenseFormDialog(
         text = {
             val screenHeight = LocalConfiguration.current.screenHeightDp
             val maxDialogContentHeight = (screenHeight * 0.8f).dp
+            val scrollState = rememberScrollState()
 
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .heightIn(max = maxDialogContentHeight) // limita la altura del diálogo
-                    .verticalScroll(rememberScrollState()),  // <–– agrega scroll
+                    .sizeIn(maxHeight = maxDialogContentHeight) // ← límite de altura
+                    .verticalScroll(scrollState),               // ← scroll vertical
                 verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
+            ){
                 OutlinedTextField(
                     value = concept,
                     onValueChange = { concept = it },
