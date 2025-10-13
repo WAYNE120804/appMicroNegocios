@@ -144,9 +144,8 @@ class MainActivity : FragmentActivity() {
                         DrawerItem(Routes.Settings, "Configuración", Icons.Default.Settings),
                     )
 
-                    val totalCompras = productsVm.totalCompras.collectAsState().value
-                    val totalGanancia = productsVm.totalGanancia.collectAsState().value
-                    val totalGastos = expensesVm.totalAmountCents.collectAsState().value
+                    val sales by salesVm.sales.collectAsState()
+                    val expenses by expensesVm.expenses.collectAsState()
 
                     ModalNavigationDrawer(
                         drawerState = drawerState,
@@ -210,13 +209,18 @@ class MainActivity : FragmentActivity() {
                                 composable(Routes.Home) {
                                     HomeScreen(
                                         settings = settingsState,
-                                        totalExpenses = totalGastos / 100.0,
-                                        totalPurchases = totalCompras / 100.0,
-                                        totalProfit = totalGanancia / 100.0,
+                                        sales = sales,
+                                        expenses = expenses,
                                         onAddSale = { nav.navigate(Routes.AddSale) },
                                         onAddPayment = { nav.navigate(Routes.Sales) },
                                         onAddClient = { nav.navigate(Routes.Customers) },
-                                        onAddExpense = { nav.navigate(Routes.Expenses) }
+                                        onAddExpense = { nav.navigate(Routes.Expenses) },
+                                        onViewSales = { nav.navigate(Routes.Sales) },
+                                        onViewExpenses = { nav.navigate(Routes.Expenses) },
+                                        onViewDebts = { nav.navigate(Routes.Sales) },
+                                        onUpdateDashboardPeriod = { period, start, end ->
+                                            settingsVm.setDashboardPeriod(period, start, end)
+                                        }
                                     )
                                 }
                                 composable(Routes.Customers) { CustomersScreen(customersVm) }
