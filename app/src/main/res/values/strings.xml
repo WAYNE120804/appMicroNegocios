@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">tiendaRopa</string>
+    <string name="app_name">My Kiosko</string>
 
     <!-- Customers -->
     <string name="customers_title">Customers</string>
@@ -16,6 +16,7 @@
     <string name="new_category_title">New category</string>
     <string name="edit">Edit</string>
     <string name="delete">Delete</string>
+    <string name="edit_customer_title">edit customer</string>
 
     <!-- Products -->
     <string name="products_title">Products</string>

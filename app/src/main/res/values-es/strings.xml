@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Tienda</string>
+    <string name="app_name">My Kiosko</string>
 
     <!-- Clientes -->
     <string name="customers_title">Clientes</string>

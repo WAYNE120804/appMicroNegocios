@@ -1,16 +1,12 @@
+import androidx.glance.appwidget.compose
+
 plugins {
+    // Use the aliases defined in libs.versions.toml
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    // Añade KSP (puedes mezclar alias y plugin directo)
-    id("org.jetbrains.kotlin.plugin.compose") version "2.0.0"
-    id("com.google.devtools.ksp") version "2.0.21-1.0.25"
-
-
-
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.compose)
 }
-
-
-
 
 android {
     namespace = "com.sebas.tiendaropa"
@@ -18,7 +14,7 @@ android {
 
     defaultConfig {
         applicationId = "com.sebas.tiendaropa"
-        minSdk = 24          // Compose recomienda 24+ (puedes dejar 29 si quieres)
+        minSdk = 24
         targetSdk = 36
         versionCode = 1
         versionName = "1.0"
@@ -35,14 +31,14 @@ android {
         }
     }
 
-    // 1) Habilita Compose
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        // Usa la sugerida por tu IDE si difiere
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
+
+    // Remove the composeOptions block to let AGP handle the compiler version
+    // composeOptions {
+    //     kotlinCompilerExtensionVersion = "1.5.14" // DELETE THIS BLOCK
+    // }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -54,56 +50,44 @@ android {
 }
 
 dependencies {
-    // Core Android
+    // Core Android (using libs from toml)
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.material)
 
-    // 2) Compose
-    implementation("androidx.activity:activity-compose:1.9.2")
-    implementation("androidx.compose.ui:ui:1.7.3")
-
-    implementation("androidx.compose.ui:ui-tooling-preview:1.7.3")
-    implementation(libs.androidx.room.common.jvm)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.foundation.layout)
-    implementation(libs.androidx.foundation)
+    // Compose (using the BOM - Bill of Materials)
+    implementation(platform(libs.androidx.compose.bom))
+    implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.ui)
-    implementation(libs.androidx.media3.common.ktx)
+    implementation(libs.androidx.ui.graphics)
+    implementation(libs.androidx.ui.tooling.preview)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
+    debugImplementation(libs.androidx.ui.tooling)
 
-    debugImplementation("androidx.compose.ui:ui-tooling:1.7.3")
+    // Navigation
+    implementation(libs.androidx.navigation.compose)
 
-    // (Opcional) Navigation Compose, si luego la usamos
-    // implementation("androidx.navigation:navigation-compose:2.8.1")
+    // Lifecycle & Coroutines
+    implementation(libs.androidx.lifecycle.viewmodel.ktx)
+    implementation(libs.androidx.lifecycle.runtime.ktx)
 
-    // Lifecycle / coroutines (para viewModelScope y Flow.stateIn)
-    implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.8.4")
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
+    // Room
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
 
-    // 3) Room
-    implementation("androidx.room:room-ktx:2.6.1")
-    ksp("androidx.room:room-compiler:2.6.1")
-    // Navigation Compose
-    implementation("androidx.navigation:navigation-compose:2.8.3")
-    implementation("androidx.compose.material:material-icons-extended:1.7.3")
+    // DataStore
+    implementation(libs.androidx.datastore.preferences)
 
-    // DataStore Preferences
-    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    // Other Libraries
+    implementation(libs.androidx.biometric)
+    implementation(libs.androidx.fragment.ktx)
+    implementation(libs.coil.compose)
 
-    // Seguridad biométrica y soporte de FragmentActivity
-    implementation("androidx.biometric:biometric:1.1.0")
-    implementation("androidx.fragment:fragment-ktx:1.8.3")
-
-// Cargar imagen del logo (URI) en Compose
-    implementation("io.coil-kt:coil-compose:2.6.0")
-
-// Íconos Material (ya lo venías usando)
-    implementation("androidx.compose.material:material-icons-extended:1.7.3")
-
-
-    // Tests
+    // Tests (using libs from toml)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    androidTestImplementation(platform(libs.androidx.compose.bom))
+    androidTestImplementation(libs.androidx.ui.test.junit4)
 }
