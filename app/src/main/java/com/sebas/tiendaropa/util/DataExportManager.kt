@@ -178,10 +178,11 @@ class DataExportManager(context: Context) {
     ) {
         putNextEntry(ZipEntry(entryName))
         val builder = StringBuilder()
-        builder.append(headers.joinToString(",") { it.toCsvField() })
+        builder.append('\uFEFF')
+        builder.append(headers.joinToString(CSV_DELIMITER) { it.toCsvField() })
         builder.append('\n')
         rows.forEach { row ->
-            builder.append(row.joinToString(",") { it.toCsvField() })
+            builder.append(row.joinToString(CSV_DELIMITER) { it.toCsvField() })
             builder.append('\n')
         }
         write(builder.toString().toByteArray(StandardCharsets.UTF_8))
@@ -189,7 +190,12 @@ class DataExportManager(context: Context) {
     }
 
     private fun String.toCsvField(): String =
-        if (contains('"') || contains(',') || contains('\n') || contains('\r')) {
+        if (
+            contains('"') ||
+            contains('\n') ||
+            contains('\r') ||
+            contains(CSV_DELIMITER)
+        ) {
             "\"${replace("\"", "\"\"")}\""
         } else {
             this
@@ -197,5 +203,6 @@ class DataExportManager(context: Context) {
 
     companion object {
         private const val EXPORT_DIR = "exports"
+        private const val CSV_DELIMITER = ";"
     }
 }
