@@ -24,6 +24,9 @@ interface ProductDao {
     @Query("SELECT * FROM products ORDER BY name ASC")
     fun observeAll(): Flow<List<ProductEntity>>
 
+    @Query("SELECT * FROM products ORDER BY name ASC")
+    suspend fun getAllSnapshot(): List<ProductEntity>
+
     @Query("SELECT * FROM products WHERE soldSaleId IS NULL ORDER BY name ASC")
     fun observeAvailable(): Flow<List<ProductEntity>>
 
