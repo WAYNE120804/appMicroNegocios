@@ -19,20 +19,23 @@ App Android para micro-negocios (tiendas de barrio y emprendimientos de ropa/cal
 
 <p align="center">
   <img src="./docs/inicio.jpg" width="260">
+  <em>Menú de inicio con KPIs diarios</em>
   <img src="./docs/inicio_dashboard.jpg" width="260">
   <img src="./docs/listaProductos.jpg" width="260">
 </p>
 
 <p align="center">
   <img src="./docs/menuConfiguracion.jpg" width="260">
+  <em>En este menú se puede configurar el acceso a la con pin o lector de huella ademas de generar el ZIP con el respaldo de datos</em>
   <img src="./docs/menuGastos.jpg" width="260">
   <img src="./docs/menuGastos2.jpg" width="260">
 </p>
 
 <p align="center">
-  <img src="./docs/adicionarProducto.jpg" width="260">
-  <img src="./docs/adicionarProducto2.jpg" width="260">
+  <img src="./docs/adiccionarProducto.jpg" width="260">
+  <img src="./docs/adiccionarProducto2.jpg" width="260">
   <img src="./docs/historialAbonosParaCompartir.jpg" width="260">
+  <em>Este comprobante se genera en PNG y se puede compartir con los clientes</em>
 </p>
 
 
@@ -44,4 +47,5 @@ Los datos se almacenan en el dispositivo del usuario (no se envían a servidores
 ## 👤 Autor
 Jhon Sebastian Díaz Villa — Ingeniero en formacion de Sistemas y Telecomunicaciones, U. de Manizales  
 Contacto: jhonsebastian-04@hotmail.com / jsdiaz99823@umanizales.edu.co
+
 
