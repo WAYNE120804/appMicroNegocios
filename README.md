@@ -17,22 +17,23 @@ App Android para micro-negocios (tiendas de barrio y emprendimientos de ropa/cal
 
 ## 📸 Capturas
 
-[menu de inicio](docs\inicio.jpg")
-[menu_dashboard](docs\inicio_dashboard.jpg")
-[menu_dashboard2](docs\inicio_dashboard2.jpg")
-[menu_gastos](docs\menuGastos.jpg)
-[menu_gastos2](docs\menuGastos2.jpg)
-[menu_realizar_venta](docs\menuRealizarVenta.jpg)
-[menu_realizar_venta2](docs\menuRealizarVenta2.jpg)!
-[menu_realizar_venta3](docs\menuRealizarVenta3.jpg)
-[menu_venta_con_abono](docs\ventasConAbono.jpg)
-[registrar_abono](docs\registrarAbono.jpg)
-[modulo_clientes](docs\moduloClientes.jpg)
-[lista_producto](docs\listaProductos.jpg)
-[adicionar_producto](docs\adiccionarProducto.jpg)
-[adicionar_producto2](docs\adiccionarProducto2.jpg)
-[menu_configuracion](docs\menuConfiguracion.jpg)
-[historial_abonos_para_compartir_con_clientes](docs\historialAbonosParaCompartir.jpg)
+<p align="center">
+  <img src="./docs/inicio.jpg" width="260">
+  <img src="./docs/inicio_dashboard.jpg" width="260">
+  <img src="./docs/listaProductos.jpg" width="260">
+</p>
+
+<p align="center">
+  <img src="./docs/menuConfiguracion.jpg" width="260">
+  <img src="./docs/menuGastos.jpg" width="260">
+  <img src="./docs/menuGastos2.jpg" width="260">
+</p>
+
+<p align="center">
+  <img src="./docs/adicionarProducto.jpg" width="260">
+  <img src="./docs/adicionarProducto2.jpg" width="260">
+  <img src="./docs/historialAbonosParaCompartir.jpg" width="260">
+</p>
 
 
 ## 🚀 Estado
@@ -43,3 +44,4 @@ Los datos se almacenan en el dispositivo del usuario (no se envían a servidores
 ## 👤 Autor
 Jhon Sebastian Díaz Villa — Ingeniero en formacion de Sistemas y Telecomunicaciones, U. de Manizales  
 Contacto: jhonsebastian-04@hotmail.com / jsdiaz99823@umanizales.edu.co
+
