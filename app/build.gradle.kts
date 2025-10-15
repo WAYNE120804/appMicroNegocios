@@ -1,5 +1,3 @@
-import androidx.glance.appwidget.compose
-
 plugins {
     // Use the aliases defined in libs.versions.toml
     alias(libs.plugins.android.application)
@@ -10,12 +8,12 @@ plugins {
 
 android {
     namespace = "com.sebas.tiendaropa"
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.sebas.tiendaropa"
         minSdk = 24
-        targetSdk = 36
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -35,10 +33,9 @@ android {
         compose = true
     }
 
-    // Remove the composeOptions block to let AGP handle the compiler version
-    // composeOptions {
-    //     kotlinCompilerExtensionVersion = "1.5.14" // DELETE THIS BLOCK
-    // }
+    composeOptions {
+        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
+    }
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -63,6 +60,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.material.icons.extended)
+    implementation(libs.androidx.foundation)
+    implementation(libs.androidx.runtime)
     debugImplementation(libs.androidx.ui.tooling)
 
     // Navigation
@@ -71,6 +70,7 @@ dependencies {
     // Lifecycle & Coroutines
     implementation(libs.androidx.lifecycle.viewmodel.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.kotlinx.coroutines.android)
 
     // Room
     implementation(libs.androidx.room.ktx)
@@ -83,6 +83,7 @@ dependencies {
     implementation(libs.androidx.biometric)
     implementation(libs.androidx.fragment.ktx)
     implementation(libs.coil.compose)
+    implementation(libs.androidx.media3.common)
 
     // Tests (using libs from toml)
     testImplementation(libs.junit)

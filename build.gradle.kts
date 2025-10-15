@@ -4,4 +4,6 @@ plugins {
     // 'apply false' means it's available for sub-modules (like :app) to use.
     alias(libs.plugins.android.application) apply false
     alias(libs.plugins.kotlin.android) apply false
+    alias(libs.plugins.ksp) apply false
+    alias(libs.plugins.compose) apply false
 }
