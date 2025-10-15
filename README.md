@@ -17,26 +17,22 @@ App Android para micro-negocios (tiendas de barrio y emprendimientos de ropa/cal
 
 ## 📸 Capturas
 
-<p align="center">
-  <img src="./docs/inicio.jpg" width="260">
-  <em>Menú de inicio con KPIs diarios</em>
-  <img src="./docs/inicio_dashboard.jpg" width="260">
-  <img src="./docs/listaProductos.jpg" width="260">
-</p>
+## 📸 Capturas
 
-<p align="center">
-  <img src="./docs/menuConfiguracion.jpg" width="260">
-  <em>En este menú se puede configurar el acceso a la con pin o lector de huella ademas de generar el ZIP con el respaldo de datos</em>
-  <img src="./docs/menuGastos.jpg" width="260">
-  <img src="./docs/menuGastos2.jpg" width="260">
-</p>
+| Inicio | Dashboard | Lista de productos |
+|---|---|---|
+| <img src="./docs/inicio.jpg" width="260" alt="Menú de inicio"> | <img src="./docs/inicio_dashboard.jpg" width="260" alt="Dashboard"> | <img src="./docs/listaProductos.jpg" width="260" alt="Lista de productos"> |
+| *Menú de inicio con KPIs diarios* | *Dashboard con indicadores recientes* | *Inventario por categorías y búsqueda* |
 
-<p align="center">
-  <img src="./docs/adiccionarProducto.jpg" width="260">
-  <img src="./docs/adiccionarProducto2.jpg" width="260">
-  <img src="./docs/historialAbonosParaCompartir.jpg" width="260">
-  <em>Este comprobante se genera en PNG y se puede compartir con los clientes</em>
-</p>
+| Configuración | Gastos | Gastos (detalle) |
+|---|---|---|
+| <img src="./docs/menuConfiguracion.jpg" width="260" alt="Menú configuración"> | <img src="./docs/menuGastos.jpg" width="260" alt="Menú gastos"> | <img src="./docs/menuGastos2.jpg" width="260" alt="Gastos detalle"> |
+| *En este menú se puede configurar el acceso a la con pin o lector de huella ademas de generar el ZIP con el respaldo de datos* | *Categorías de egresos* | *Filtros por fecha y categoría* |
+
+| Agregar producto | Agregar producto (2) | Comprobante de abono |
+|---|---|---|
+| <img src="./docs/adicionarProducto.jpg" width="260" alt="Agregar producto"> | <img src="./docs/adicionarProducto2.jpg" width="260" alt="Agregar producto 2"> | <img src="./docs/historialAbonosParaCompartir.jpg" width="260" alt="Comprobante de abono para compartir"> |
+| *Registro de producto (talla, color, stock)* | *Validaciones y campos adicionales* | *Este comprobante se genera en PNG y se puede compartir con los clientes* |
 
 
 ## 🚀 Estado
@@ -47,5 +43,6 @@ Los datos se almacenan en el dispositivo del usuario (no se envían a servidores
 ## 👤 Autor
 Jhon Sebastian Díaz Villa — Ingeniero en formacion de Sistemas y Telecomunicaciones, U. de Manizales  
 Contacto: jhonsebastian-04@hotmail.com / jsdiaz99823@umanizales.edu.co
+
 
 
