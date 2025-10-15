@@ -36,13 +36,16 @@ App Android para micro-negocios (tiendas de barrio y emprendimientos de ropa/cal
 
 
 ## 🚀 Estado
-**MVP funcional**. Próximos pasos: incluir fotos en respaldo ZIP y añadir mas idiomas (por ahora solo en ingles y español) y mas monedas (por ahora solo COP).
+**MVP funcional**. Próximos pasos: incluir fotos en respaldo ZIP y mas monedas.
+> Nota: por ahora solo en ingles y español; se añadirán mas idiomas en una próxima versión.
+> esta diseñada para mondena de Colombia (COP); se añadirán mas monedas en una próxima versión.
 ## 🔒 Privacidad
 Los datos se almacenan en el dispositivo del usuario (no se envían a servidores).
 
 ## 👤 Autor
 Jhon Sebastian Díaz Villa — Ingeniero en formacion de Sistemas y Telecomunicaciones, U. de Manizales  
 Contacto: jhonsebastian-04@hotmail.com / jsdiaz99823@umanizales.edu.co
+
 
 
 
