@@ -22,17 +22,17 @@ App Android para micro-negocios (tiendas de barrio y emprendimientos de ropa/cal
 | Inicio | Dashboard | Lista de productos |
 |---|---|---|
 | <img src="./docs/inicio.jpg" width="260" alt="Menú de inicio"> | <img src="./docs/inicio_dashboard.jpg" width="260" alt="Dashboard"> | <img src="./docs/listaProductos.jpg" width="260" alt="Lista de productos"> |
-| *Menú de inicio con KPIs diarios* | *Dashboard con indicadores recientes* | *Inventario por categorías y búsqueda* |
+| *Menú de inicio* | *Dashboard con indicadores recientes* | *lista de productos con filtros de vendidos y disponibles* |
 
 | Configuración | Gastos | Gastos (detalle) |
 |---|---|---|
 | <img src="./docs/menuConfiguracion.jpg" width="260" alt="Menú configuración"> | <img src="./docs/menuGastos.jpg" width="260" alt="Menú gastos"> | <img src="./docs/menuGastos2.jpg" width="260" alt="Gastos detalle"> |
-| *En este menú se puede configurar el acceso a la con pin o lector de huella ademas de generar el ZIP con el respaldo de datos* | *Categorías de egresos* | *Filtros por fecha y categoría* |
+| *En este menú se puede configurar el acceso a la con pin o lector de huella ademas de generar el ZIP con el respaldo de datos* | *modulos de egresos* | *se puede guardar con fotos* |
 
 | Agregar producto | Agregar producto (2) | Comprobante de abono |
 |---|---|---|
-| <img src="./docs/adicionarProducto.jpg" width="260" alt="Agregar producto"> | <img src="./docs/adicionarProducto2.jpg" width="260" alt="Agregar producto 2"> | <img src="./docs/historialAbonosParaCompartir.jpg" width="260" alt="Comprobante de abono para compartir"> |
-| *Registro de producto (talla, color, stock)* | *Validaciones y campos adicionales* | *Este comprobante se genera en PNG y se puede compartir con los clientes* |
+| <img src="./docs/adiccionarProducto.jpg" width="260" alt="Agregar producto"> | <img src="./docs/adiccionarProducto2.jpg" width="260" alt="Agregar producto 2"> | <img src="./docs/historialAbonosParaCompartir.jpg" width="260" alt="Comprobante de abono para compartir"> |
+| *Registro de producto* | *Validaciones y campos adicionales* | *Este comprobante se genera en PNG y se puede compartir con los clientes* |
 
 
 ## 🚀 Estado
@@ -43,6 +43,7 @@ Los datos se almacenan en el dispositivo del usuario (no se envían a servidores
 ## 👤 Autor
 Jhon Sebastian Díaz Villa — Ingeniero en formacion de Sistemas y Telecomunicaciones, U. de Manizales  
 Contacto: jhonsebastian-04@hotmail.com / jsdiaz99823@umanizales.edu.co
+
 
 
 
